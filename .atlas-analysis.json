@@ -1,0 +1,92 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Hedera Mirror Node TypeScript SDK",
+  "projectDescription": "TypeScript wrapper for the Hedera Mirror Node REST API with complete type definitions and declarative abstraction layer",
+  "theme": "palm",
+  "primaryColor": "#82249C",
+  "lightColor": "#A855F7",
+  "darkColor": "#6B21A8",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "core-concepts/client-setup",
+              "core-concepts/pagination",
+              "core-concepts/optional-filters",
+              "core-concepts/transaction-types"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/custom-http-client",
+              "guides/migration-guide"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Resources",
+            "pages": [
+              "api-reference/accounts",
+              "api-reference/transactions",
+              "api-reference/topic-messages",
+              "api-reference/tokens",
+              "api-reference/nfts",
+              "api-reference/smart-contracts",
+              "api-reference/network-supply"
+            ]
+          },
+          {
+            "group": "Types & Helpers",
+            "pages": [
+              "api-reference/types/optional-filters",
+              "api-reference/types/transaction-types",
+              "api-reference/types/token-types"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Full TypeScript type definitions for all API responses",
+    "Declarative API with method chaining",
+    "Built-in pagination support with next() cursor",
+    "Optional filters for flexible querying (gt, gte, lt, lte, ne)",
+    "Fetch API by default (Axios optional)",
+    "Support for Accounts, Transactions, Topics, Tokens, NFTs, and Smart Contracts",
+    "Helper utilities for token and NFT operations",
+    "Pluggable HTTP client architecture"
+  ],
+  "publicApiSurface": [
+    "Client (FetchClient)",
+    "AxiosClient",
+    "accounts(client)",
+    "transactions(client)",
+    "topicMessages(client)",
+    "tokenUtils(client)",
+    "nftUtils(client)",
+    "smartContract(client)",
+    "networkSupply(client)",
+    "optionalFilters",
+    "TransactionType",
+    "TokenTypeFilter",
+    "BaseMirrorClient"
+  ]
+}
