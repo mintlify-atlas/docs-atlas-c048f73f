@@ -27,7 +27,7 @@ The `Client` (exported from `FetchClient.ts`) uses the native JavaScript Fetch A
 <Tabs>
   <Tab title="Mainnet">
     ```typescript
-    import { Client } from '@hashgraph/hedera-mirror-node-ts';
+    import { Client } from '@tikz/hedera-mirror-node-ts';
 
     const mirrorClient = new Client('https://mainnet.mirrornode.hedera.com/');
     ```
@@ -35,7 +35,7 @@ The `Client` (exported from `FetchClient.ts`) uses the native JavaScript Fetch A
   
   <Tab title="Testnet">
     ```typescript
-    import { Client } from '@hashgraph/hedera-mirror-node-ts';
+    import { Client } from '@tikz/hedera-mirror-node-ts';
 
     const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
     ```
@@ -43,7 +43,7 @@ The `Client` (exported from `FetchClient.ts`) uses the native JavaScript Fetch A
   
   <Tab title="Previewnet">
     ```typescript
-    import { Client } from '@hashgraph/hedera-mirror-node-ts';
+    import { Client } from '@tikz/hedera-mirror-node-ts';
 
     const mirrorClient = new Client('https://previewnet.mirrornode.hedera.com/');
     ```
@@ -92,7 +92,7 @@ The `AxiosClient` uses the popular Axios library, which provides additional feat
 <Tabs>
   <Tab title="Mainnet">
     ```typescript
-    import { AxiosClient } from '@hashgraph/hedera-mirror-node-ts';
+    import { AxiosClient } from '@tikz/hedera-mirror-node-ts';
 
     const mirrorClient = new AxiosClient('https://mainnet.mirrornode.hedera.com/');
     ```
@@ -100,7 +100,7 @@ The `AxiosClient` uses the popular Axios library, which provides additional feat
   
   <Tab title="Testnet">
     ```typescript
-    import { AxiosClient } from '@hashgraph/hedera-mirror-node-ts';
+    import { AxiosClient } from '@tikz/hedera-mirror-node-ts';
 
     const mirrorClient = new AxiosClient('https://testnet.mirrornode.hedera.com/');
     ```
@@ -108,7 +108,7 @@ The `AxiosClient` uses the popular Axios library, which provides additional feat
   
   <Tab title="Previewnet">
     ```typescript
-    import { AxiosClient } from '@hashgraph/hedera-mirror-node-ts';
+    import { AxiosClient } from '@tikz/hedera-mirror-node-ts';
 
     const mirrorClient = new AxiosClient('https://previewnet.mirrornode.hedera.com/');
     ```
@@ -166,7 +166,7 @@ public async fetch<D = any>(url: string, params: Params): Promise<D> {
 Once you've created a client instance, you can use it with any of the SDK's API methods:
 
 ```typescript
-import { Client, accounts, transactions } from '@hashgraph/hedera-mirror-node-ts';
+import { Client, accounts, transactions } from '@tikz/hedera-mirror-node-ts';
 
 const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
 

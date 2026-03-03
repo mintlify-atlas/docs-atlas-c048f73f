@@ -109,7 +109,7 @@ export const optionalFilters = {
 Find accounts with balance greater than a threshold:
 
 ```typescript
-import { Client, accounts, optionalFilters } from '@hashgraph/hedera-mirror-node-ts';
+import { Client, accounts, optionalFilters } from '@tikz/hedera-mirror-node-ts-ts';
 
 const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
 
@@ -143,7 +143,7 @@ import {
   Client, 
   topicMessages, 
   optionalFilters 
-} from '@hashgraph/hedera-mirror-node-ts';
+} from '@tikz/hedera-mirror-node-ts-ts';
 
 const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
 
@@ -171,7 +171,7 @@ if (msgs.messages.length === limit) {
 All paginated queries support timestamp filtering:
 
 ```typescript
-import { optionalFilters } from '@hashgraph/hedera-mirror-node-ts';
+import { optionalFilters } from '@tikz/hedera-mirror-node-ts-ts';
 
 // Get transactions after a specific timestamp
 const txnCursor = transactions(mirrorClient)
@@ -213,7 +213,7 @@ import {
   transactions,
   optionalFilters,
   TransactionType 
-} from '@hashgraph/hedera-mirror-node-ts';
+} from '@tikz/hedera-mirror-node-ts-ts';
 
 const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
 
@@ -248,7 +248,7 @@ import {
   Client, 
   transactions, 
   TransactionType 
-} from '@hashgraph/hedera-mirror-node-ts';
+} from '@tikz/hedera-mirror-node-ts-ts';
 
 const mirrorClient = new Client('https://mainnet.mirrornode.hedera.com/');
 
@@ -276,7 +276,7 @@ import {
   Client, 
   transactions,
   optionalFilters 
-} from '@hashgraph/hedera-mirror-node-ts';
+} from '@tikz/hedera-mirror-node-ts-ts';
 
 const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
 
@@ -302,7 +302,7 @@ import {
   Client, 
   transactions,
   TransactionType 
-} from '@hashgraph/hedera-mirror-node-ts';
+} from '@tikz/hedera-mirror-node-ts-ts';
 
 const mirrorClient = new Client('https://mainnet.mirrornode.hedera.com/');
 

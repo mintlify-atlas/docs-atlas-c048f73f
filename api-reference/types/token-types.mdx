@@ -48,7 +48,7 @@ enum TokenTypeFilter {
 ### Filter tokens by type
 
 ```typescript
-import { RestMirrorNode, TokenTypeFilter } from '@hashgraph/hedera-mirror-node';
+import { RestMirrorNode, TokenTypeFilter } from '@tikz/hedera-mirror-node-ts';
 
 const mirrorNode = new RestMirrorNode('testnet');
 
@@ -85,7 +85,7 @@ const accountNFTs = await mirrorNode.getAccountTokens('0.0.1234', {
 ### Combine with other filters
 
 ```typescript
-import { optionalFilters } from '@hashgraph/hedera-mirror-node';
+import { optionalFilters } from '@tikz/hedera-mirror-node-ts';
 
 // Get fungible tokens with supply greater than 1 million
 const popularTokens = await mirrorNode.getTokens({

@@ -29,7 +29,7 @@ interface Response {
 Here's a real-world example from the test suite showing how to paginate through topic messages:
 
 ```typescript
-import { Client, topicMessages, optionalFilters } from '@hashgraph/hedera-mirror-node-ts';
+import { Client, topicMessages, optionalFilters } from '@tikz/hedera-mirror-node-ts';
 
 const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
 
@@ -78,7 +78,7 @@ async next(): Promise<D | null> {
 Example showing pagination through account data:
 
 ```typescript
-import { Client, accounts } from '@hashgraph/hedera-mirror-node-ts';
+import { Client, accounts } from '@tikz/hedera-mirror-node-ts';
 
 const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
 
@@ -108,7 +108,7 @@ import {
   Client, 
   transactions, 
   TransactionType 
-} from '@hashgraph/hedera-mirror-node-ts';
+} from '@tikz/hedera-mirror-node-ts';
 
 const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
 
@@ -281,7 +281,7 @@ console.log(`Collected ${allMessages.length} total messages`);
 You can combine pagination with timestamp filtering:
 
 ```typescript
-import { optionalFilters } from '@hashgraph/hedera-mirror-node-ts';
+import { optionalFilters } from '@tikz/hedera-mirror-node-ts';
 
 const cursor = transactions(mirrorClient)
   .timestamp(optionalFilters.greaterThan('1234567890.000000000'))

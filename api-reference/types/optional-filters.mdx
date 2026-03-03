@@ -87,63 +87,58 @@ The `optionalFilters` object provides convenient methods to construct filter str
 ### Filter transactions by timestamp
 
 ```typescript
-import { RestMirrorNode, optionalFilters } from '@hashgraph/hedera-mirror-node';
+import { Client, transactions, optionalFilters } from '@tikz/hedera-mirror-node-ts';
 
-const mirrorNode = new RestMirrorNode('testnet');
+const client = new Client('https://testnet.mirrornode.hedera.com');
 
 // Get transactions after a specific timestamp
-const recentTxs = await mirrorNode.getTransactions({
-  timestamp: optionalFilters.greaterThan('1234567890.000000000')
-});
-
-// Get transactions in a time range
-const rangeTxs = await mirrorNode.getTransactions({
-  timestamp: [
-    optionalFilters.greaterThanEqualTo('1234567890.000000000'),
-    optionalFilters.lessThan('1234567900.000000000')
-  ]
-});
+const recentTxs = await transactions(client)
+  .timestamp(optionalFilters.greaterThan('1234567890.000000000'))
+  .get();
 ```
 
 ### Filter accounts by balance
 
 ```typescript
+import { accounts, optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
 // Get accounts with balance greater than 100 HBAR
-const richAccounts = await mirrorNode.getAccounts({
-  'account.balance': optionalFilters.greaterThan(10000000000) // 100 HBAR in tinybars
-});
+const richAccounts = await accounts(client)
+  .setBalance(optionalFilters.greaterThan(10000000000)) // 100 HBAR in tinybars
+  .get();
 
-// Get accounts with specific balance
-const exactBalance = await mirrorNode.getAccounts({
-  'account.balance': optionalFilters.equalTo(5000000000) // 50 HBAR
-});
+// Get accounts with specific balance range
+const balanceRange = await accounts(client)
+  .setBalance(optionalFilters.lessThan(50000000000)) // Less than 500 HBAR
+  .get();
 ```
 
-### Filter tokens by supply
+### Filter accounts by ID
 
 ```typescript
-// Get tokens with total supply less than 1 million
-const limitedSupply = await mirrorNode.getTokens({
-  totalSupply: optionalFilters.lessThan(1000000)
-});
+// Get accounts with ID less than a specific value
+const accountsBelow = await accounts(client)
+  .setAccountId(optionalFilters.lessThan('0.0.1000'))
+  .setLimit(10)
+  .get();
 
-// Get tokens excluding a specific supply amount
-const excludeSupply = await mirrorNode.getTokens({
-  totalSupply: optionalFilters.notEqualTo(0)
-});
+// Get accounts excluding a specific ID
+const excludeAccount = await accounts(client)
+  .setAccountId(optionalFilters.notEqualTo('0.0.98'))
+  .get();
 ```
 
-### Combine multiple filters
+### Filter topic messages by sequence number
 
 ```typescript
-// Get NFT transfers in a specific time range for a token
-const nftTransfers = await mirrorNode.getNFTTransfers({
-  tokenId: '0.0.12345',
-  timestamp: [
-    optionalFilters.greaterThanEqualTo('1700000000.000000000'),
-    optionalFilters.lessThanEqualTo('1700100000.000000000')
-  ]
-});
+import { topicMessages, optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
+// Get messages with sequence number greater than 20
+const messages = await topicMessages(client)
+  .setTopicId('0.0.16430')
+  .setSequenceNumber(optionalFilters.greaterThan(20))
+  .setLimit(10)
+  .get();
 ```
 
 ## Notes
