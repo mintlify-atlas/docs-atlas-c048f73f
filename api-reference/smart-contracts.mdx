@@ -1,0 +1,296 @@
+---
+title: Smart contracts
+description: Query smart contract information from the Hedera Mirror Node REST API
+---
+
+The `smartContract()` function provides access to smart contract data deployed on the Hedera network.
+
+## Function signature
+
+```typescript
+import { smartContract } from '@tikz/hedera-mirror-node-ts';
+
+const contractCursor = smartContract(client: BaseMirrorClient): SmartContracts
+```
+
+<ParamField path="client" type="BaseMirrorClient" required>
+  The mirror node client instance used to make API requests
+</ParamField>
+
+**Returns:** A `SmartContracts` instance for querying smart contract data
+
+## Basic usage
+
+```typescript
+import { Client, smartContract } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+
+const contractCursor = smartContract(client)
+  .setLimit(2)
+  .order('asc');
+
+const contracts = await contractCursor.get();
+const nextContracts = await contractCursor.next();
+```
+
+## SmartContracts class methods
+
+### setSmartContractId()
+
+Filter contracts by contract ID.
+
+```typescript
+setSmartContractId(val: OptionalFilters): SmartContracts
+```
+
+<ParamField path="val" type="OptionalFilters">
+  Contract ID to filter by. Supports comparison operators like `gt:`, `gte:`, `lt:`, `lte:`, `ne:`, or a plain contract ID string
+</ParamField>
+
+**Example:**
+
+```typescript
+import { optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
+// Get a specific contract
+const cursor = smartContract(client)
+  .setSmartContractId('0.0.123456');
+
+// Get contracts with ID greater than a value
+const cursor2 = smartContract(client)
+  .setSmartContractId(optionalFilters.greaterThan('0.0.100000'));
+```
+
+### order()
+
+Set the order of results. Inherited from `HasMoreMirrorNode`.
+
+```typescript
+order(order: "asc" | "desc"): SmartContracts
+```
+
+<ParamField path="order" type="'asc' | 'desc'">
+  Sort order for results
+</ParamField>
+
+### setLimit()
+
+Set the maximum number of results per page. Inherited from `HasMoreMirrorNode`.
+
+```typescript
+setLimit(limit: number): SmartContracts
+```
+
+<ParamField path="limit" type="number">
+  Maximum number of results to return (default is 25)
+</ParamField>
+
+### timestamp()
+
+Filter by timestamp. Inherited from `HasMoreMirrorNode`.
+
+```typescript
+timestamp(timestamp: OptionalFilters): SmartContracts
+```
+
+<ParamField path="timestamp" type="OptionalFilters">
+  Timestamp to filter by. Supports comparison operators
+</ParamField>
+
+### get()
+
+Execute the query and return smart contract data.
+
+```typescript
+get(): Promise<ContractResponse>
+```
+
+**Returns:** A promise that resolves to the contracts response
+
+### next()
+
+Fetch the next page of results.
+
+```typescript
+next(): Promise<ContractResponse | null>
+```
+
+**Returns:** A promise that resolves to the next page of contracts, or `null` if no more pages exist
+
+## Response types
+
+### ContractResponse
+
+<ResponseField name="contracts" type="Contract[]">
+  Array of smart contract objects
+  
+  <Expandable title="Contract properties">
+    <ResponseField name="contract_id" type="string">
+      The contract ID (e.g., "0.0.123456")
+    </ResponseField>
+    
+    <ResponseField name="solidity_address" type="string">
+      The Solidity-compatible EVM address of the contract
+    </ResponseField>
+    
+    <ResponseField name="file_id" type="string">
+      File ID containing the contract bytecode
+    </ResponseField>
+    
+    <ResponseField name="created_timestamp" type="string">
+      Timestamp when the contract was created
+    </ResponseField>
+    
+    <ResponseField name="deleted" type="boolean">
+      Whether the contract has been deleted
+    </ResponseField>
+    
+    <ResponseField name="memo" type="string">
+      Contract memo
+    </ResponseField>
+    
+    <ResponseField name="admin_key" type="AdminKey">
+      Admin key information for the contract
+      
+      <Expandable title="AdminKey properties">
+        <ResponseField name="_type" type="string">
+          Key type (e.g., "ED25519", "ECDSA_SECP256K1", "contractId")
+        </ResponseField>
+        
+        <ResponseField name="key" type="string">
+          The key value in hexadecimal format
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="auto_renew_period" type="number">
+      Auto-renewal period in seconds
+    </ResponseField>
+    
+    <ResponseField name="expiration_timestamp" type="any">
+      Expiration timestamp of the contract
+    </ResponseField>
+    
+    <ResponseField name="obtainer_id" type="any">
+      Account ID that will receive remaining balance when contract expires
+    </ResponseField>
+    
+    <ResponseField name="proxy_account_id" type="any">
+      Proxy account ID if set
+    </ResponseField>
+    
+    <ResponseField name="timestamp" type="Timestamp">
+      Timestamp range for the contract
+      
+      <Expandable title="Timestamp properties">
+        <ResponseField name="from" type="string">
+          Start timestamp
+        </ResponseField>
+        
+        <ResponseField name="to" type="any">
+          End timestamp (null if contract is still active)
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="links" type="Links">
+  Pagination links
+  
+  <Expandable title="Links properties">
+    <ResponseField name="next" type="string">
+      URL for the next page of results
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Examples
+
+### Query all contracts
+
+```typescript
+import { Client, smartContract } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+
+const cursor = smartContract(client)
+  .setLimit(10)
+  .order('desc');
+
+const response = await cursor.get();
+
+console.log(`Found ${response.contracts.length} contracts`);
+
+for (const contract of response.contracts) {
+  console.log(`Contract ID: ${contract.contract_id}`);
+  console.log(`EVM Address: ${contract.solidity_address}`);
+  console.log(`Created: ${contract.created_timestamp}`);
+  console.log('---');
+}
+```
+
+### Filter contracts by ID range
+
+```typescript
+import { optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
+const cursor = smartContract(client)
+  .setSmartContractId(optionalFilters.greaterThan('0.0.100000'))
+  .setLimit(20);
+
+const response = await cursor.get();
+```
+
+### Paginate through contracts
+
+```typescript
+const cursor = smartContract(client)
+  .setLimit(50)
+  .order('asc');
+
+let page = 1;
+let response = await cursor.get();
+
+while (response) {
+  console.log(`Page ${page}: ${response.contracts.length} contracts`);
+  
+  for (const contract of response.contracts) {
+    console.log(`  - ${contract.contract_id}`);
+  }
+  
+  response = await cursor.next();
+  page++;
+}
+```
+
+## Related types
+
+### OptionalFilters
+
+The `OptionalFilters` type allows filtering with comparison operators:
+
+```typescript
+type OptionalFilters = 
+  | `gt:${string}`    // Greater than
+  | `gte:${string}`   // Greater than or equal to
+  | `lt:${string}`    // Less than
+  | `lte:${string}`   // Less than or equal to
+  | `ne:${string}`    // Not equal to
+  | `eq:${string}`    // Equal to
+  | string;           // Plain value
+```
+
+Helper functions are available:
+
+```typescript
+import { optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
+optionalFilters.greaterThan(val)
+optionalFilters.greaterThanEqualTo(val)
+optionalFilters.lessThan(val)
+optionalFilters.lessThanEqualTo(val)
+optionalFilters.notEqualTo(val)
+optionalFilters.equalTo(val)
+```

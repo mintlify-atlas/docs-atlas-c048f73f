@@ -1,0 +1,225 @@
+---
+title: Client setup
+description: Learn how to set up and configure the FetchClient and AxiosClient for connecting to the Hedera Mirror Node REST API
+---
+
+The Hedera Mirror Node TypeScript SDK provides two HTTP client implementations for connecting to the Mirror Node REST API: `Client` (based on native Fetch API) and `AxiosClient` (based on Axios library).
+
+## Client types
+
+Both clients implement the `BaseMirrorClient` interface, which defines the core functionality for making HTTP requests to the Mirror Node.
+
+### BaseMirrorClient interface
+
+```typescript
+export interface BaseMirrorClient {
+  baseURL: string;
+  fetch<D = any>(baseURL: string, params: Params): Promise<D>;
+}
+```
+
+## Using FetchClient
+
+The `Client` (exported from `FetchClient.ts`) uses the native JavaScript Fetch API, making it lightweight with no external dependencies for HTTP requests.
+
+### Basic setup
+
+<Tabs>
+  <Tab title="Mainnet">
+    ```typescript
+    import { Client } from '@hashgraph/hedera-mirror-node-ts';
+
+    const mirrorClient = new Client('https://mainnet.mirrornode.hedera.com/');
+    ```
+  </Tab>
+  
+  <Tab title="Testnet">
+    ```typescript
+    import { Client } from '@hashgraph/hedera-mirror-node-ts';
+
+    const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
+    ```
+  </Tab>
+  
+  <Tab title="Previewnet">
+    ```typescript
+    import { Client } from '@hashgraph/hedera-mirror-node-ts';
+
+    const mirrorClient = new Client('https://previewnet.mirrornode.hedera.com/');
+    ```
+  </Tab>
+</Tabs>
+
+### Implementation details
+
+The `Client` constructor automatically normalizes the base URL by removing trailing slashes:
+
+```typescript
+class FetchClient implements BaseMirrorClient {
+  constructor(public baseURL: string) {
+    if (this.baseURL.endsWith('/')) {
+      this.baseURL = this.baseURL.slice(0, -1);
+    }
+  }
+}
+```
+
+The `fetch` method constructs the full URL with query parameters and makes the HTTP request:
+
+```typescript
+public async fetch<D = any>(url: string, params: Params): Promise<D> {
+  if (!this.baseURL) throw new Error('no url set');
+
+  const queryString = new URLSearchParams(params as Record<string, string>).toString();
+  const fullURL = `${this.baseURL}${url}${queryString ? `?${queryString}` : ''}`;
+  
+  const response = await fetch(fullURL);
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json() as D;
+}
+```
+
+## Using AxiosClient
+
+The `AxiosClient` uses the popular Axios library, which provides additional features like request/response interceptors and better error handling.
+
+### Basic setup
+
+<Tabs>
+  <Tab title="Mainnet">
+    ```typescript
+    import { AxiosClient } from '@hashgraph/hedera-mirror-node-ts';
+
+    const mirrorClient = new AxiosClient('https://mainnet.mirrornode.hedera.com/');
+    ```
+  </Tab>
+  
+  <Tab title="Testnet">
+    ```typescript
+    import { AxiosClient } from '@hashgraph/hedera-mirror-node-ts';
+
+    const mirrorClient = new AxiosClient('https://testnet.mirrornode.hedera.com/');
+    ```
+  </Tab>
+  
+  <Tab title="Previewnet">
+    ```typescript
+    import { AxiosClient } from '@hashgraph/hedera-mirror-node-ts';
+
+    const mirrorClient = new AxiosClient('https://previewnet.mirrornode.hedera.com/');
+    ```
+  </Tab>
+</Tabs>
+
+### Implementation details
+
+The `AxiosClient` creates an Axios instance with the base URL configured:
+
+```typescript
+class AxiosClient implements BaseMirrorClient {
+  private baseApi: AxiosInstance;
+  
+  constructor(public baseURL: string) {
+    if (this.baseURL.endsWith('/')) {
+      this.baseURL = this.baseURL.slice(0, -1);
+    }
+    
+    this.baseApi = axios.create({ baseURL: this.baseURL });
+  }
+}
+```
+
+The `fetch` method uses the Axios instance to make requests:
+
+```typescript
+public async fetch<D = any>(url: string, params: Params): Promise<D> {
+  if (!this.baseURL) throw new Error('no url set');
+  const response = await this.baseApi.get(url, { params });
+  return response.data;
+}
+```
+
+## Choosing a client
+
+<CardGroup cols={2}>
+  <Card title="FetchClient" icon="bolt">
+    - Lightweight with no HTTP library dependencies
+    - Uses native browser/Node.js Fetch API
+    - Ideal for browser environments
+    - Simpler error handling
+  </Card>
+  
+  <Card title="AxiosClient" icon="plug">
+    - Full-featured HTTP client
+    - Advanced error handling
+    - Request/response interceptors available
+    - Better TypeScript support for errors
+  </Card>
+</CardGroup>
+
+## Using the client
+
+Once you've created a client instance, you can use it with any of the SDK's API methods:
+
+```typescript
+import { Client, accounts, transactions } from '@hashgraph/hedera-mirror-node-ts';
+
+const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
+
+// Get accounts
+const accountsData = await accounts(mirrorClient)
+  .setLimit(10)
+  .get();
+
+// Get transactions
+const txnData = await transactions(mirrorClient)
+  .setAccountId('0.0.1234')
+  .get();
+```
+
+## Error handling
+
+Both clients throw errors when requests fail. The error messages differ slightly:
+
+<Tabs>
+  <Tab title="FetchClient">
+    ```typescript
+    try {
+      const data = await accounts(mirrorClient).get();
+    } catch (error) {
+      // Error format: "HTTP error! status: 404"
+      console.error(error.message);
+    }
+    ```
+  </Tab>
+  
+  <Tab title="AxiosClient">
+    ```typescript
+    try {
+      const data = await accounts(mirrorClient).get();
+    } catch (error) {
+      // Axios provides detailed error information
+      if (error.response) {
+        console.error('Status:', error.response.status);
+        console.error('Data:', error.response.data);
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Pagination" href="/core-concepts/pagination" icon="arrows-turn-right">
+    Learn how to paginate through large result sets
+  </Card>
+  
+  <Card title="Optional filters" href="/core-concepts/optional-filters" icon="filter">
+    Use comparison operators in your queries
+  </Card>
+</CardGroup>

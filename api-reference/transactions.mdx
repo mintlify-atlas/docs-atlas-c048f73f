@@ -1,0 +1,375 @@
+---
+title: Transactions
+description: Query transaction data and history from the Hedera Mirror Node REST API
+---
+
+The `transactions()` function provides access to transaction data, including transfers, consensus messages, and smart contract calls.
+
+## Function signature
+
+```typescript
+import { transactions } from '@tikz/hedera-mirror-node-ts';
+
+const transactionsCursor = transactions(client: BaseMirrorClient, accountId?: string): Transactions
+```
+
+<ParamField path="client" type="BaseMirrorClient" required>
+  The mirror node client instance used to make API requests
+</ParamField>
+
+<ParamField path="accountId" type="string">
+  Optional account ID to filter transactions by
+</ParamField>
+
+**Returns:** A `Transactions` instance for querying transaction data
+
+## Basic usage
+
+```typescript
+import { Client, transactions, TransactionType } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+
+const transactionCursor = transactions(client)
+  .setAccountId('0.0.15678177')
+  .setLimit(2)
+  .setType('debit')
+  .setTransactionType(TransactionType.CONSENSUSSUBMITMESSAGE)
+  .setResult('success');
+
+const txns = await transactionCursor.get();
+const txns2 = await transactionCursor.next();
+```
+
+## Fetch single transaction
+
+```typescript
+const txn = await transactions(client)
+  .setTransactionId('0.0.1234-1234567890-123456789')
+  .get();
+```
+
+<Note>
+  When a transaction ID is set, all other query parameters are ignored.
+</Note>
+
+## Transactions class methods
+
+### setAccountId()
+
+Filter transactions by account ID.
+
+```typescript
+setAccountId(val: OptionalFilters): Transactions
+```
+
+<ParamField path="val" type="OptionalFilters">
+  Account ID to filter by. Supports comparison operators
+</ParamField>
+
+**Example:**
+
+```typescript
+const cursor = transactions(client)
+  .setAccountId('0.0.1234');
+```
+
+### setTransactionId()
+
+Fetch a specific transaction by its ID. When set, all other filters are ignored.
+
+```typescript
+setTransactionId(val: string | null): Transactions
+```
+
+<ParamField path="val" type="string | null">
+  Transaction ID to fetch (e.g., "0.0.1234-1234567890-123456789")
+</ParamField>
+
+**Example:**
+
+```typescript
+const cursor = transactions(client)
+  .setTransactionId('0.0.1234-1234567890-123456789');
+
+const txn = await cursor.get();
+```
+
+### setResult()
+
+Filter transactions by result status.
+
+```typescript
+setResult(val: 'fail' | 'success'): Transactions
+```
+
+<ParamField path="val" type="'fail' | 'success'">
+  Transaction result to filter by
+</ParamField>
+
+**Example:**
+
+```typescript
+const cursor = transactions(client)
+  .setResult('success');
+```
+
+### setType()
+
+Filter by credit or debit transactions.
+
+```typescript
+setType(val: 'credit' | 'debit'): Transactions
+```
+
+<ParamField path="val" type="'credit' | 'debit'">
+  Transaction type - `credit` for incoming, `debit` for outgoing
+</ParamField>
+
+**Example:**
+
+```typescript
+const cursor = transactions(client)
+  .setAccountId('0.0.1234')
+  .setType('debit'); // Only outgoing transactions
+```
+
+### setTransactionType()
+
+Filter by Hedera transaction type.
+
+```typescript
+setTransactionType(val: TransactionType): Transactions
+```
+
+<ParamField path="val" type="TransactionType">
+  The Hedera transaction type (see [TransactionType enum](#transactiontype-enum))
+</ParamField>
+
+**Example:**
+
+```typescript
+import { TransactionType } from '@tikz/hedera-mirror-node-ts';
+
+const cursor = transactions(client)
+  .setTransactionType(TransactionType.CRYPTOTRANSFER);
+```
+
+### order()
+
+Set the order of results. Inherited from `HasMoreMirrorNode`.
+
+```typescript
+order(order: "asc" | "desc"): Transactions
+```
+
+<ParamField path="order" type="'asc' | 'desc'">
+  Sort order for results
+</ParamField>
+
+### setLimit()
+
+Set the maximum number of results per page. Inherited from `HasMoreMirrorNode`.
+
+```typescript
+setLimit(limit: number): Transactions
+```
+
+<ParamField path="limit" type="number">
+  Maximum number of results to return
+</ParamField>
+
+### timestamp()
+
+Filter by timestamp. Inherited from `HasMoreMirrorNode`.
+
+```typescript
+timestamp(timestamp: OptionalFilters): Transactions
+```
+
+<ParamField path="timestamp" type="OptionalFilters">
+  Timestamp to filter by. Supports comparison operators
+</ParamField>
+
+### get()
+
+Execute the query and return transaction data.
+
+```typescript
+get(): Promise<TransactionsResponse>
+```
+
+**Returns:** A promise that resolves to the transactions response
+
+### next()
+
+Fetch the next page of results.
+
+```typescript
+next(): Promise<TransactionsResponse | null>
+```
+
+**Returns:** A promise that resolves to the next page of transactions, or `null` if no more pages exist
+
+## Response types
+
+### TransactionsResponse
+
+<ResponseField name="transactions" type="Transaction[]">
+  Array of transaction objects
+  
+  <Expandable title="Transaction properties">
+    <ResponseField name="bytes" type="null | string">
+      Raw transaction bytes (base64 encoded)
+    </ResponseField>
+    
+    <ResponseField name="charged_tx_fee" type="number">
+      Transaction fee charged in tinybars
+    </ResponseField>
+    
+    <ResponseField name="consensus_timestamp" type="string">
+      Consensus timestamp
+    </ResponseField>
+    
+    <ResponseField name="entity_id" type="string">
+      Entity ID involved in the transaction
+    </ResponseField>
+    
+    <ResponseField name="max_fee" type="string">
+      Maximum fee in tinybars
+    </ResponseField>
+    
+    <ResponseField name="memo_base64" type="string">
+      Transaction memo (base64 encoded)
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Transaction type name
+    </ResponseField>
+    
+    <ResponseField name="nft_transfers" type="array">
+      Array of NFT transfers in this transaction
+    </ResponseField>
+    
+    <ResponseField name="node" type="string">
+      Node ID that processed the transaction
+    </ResponseField>
+    
+    <ResponseField name="nonce" type="number">
+      Transaction nonce
+    </ResponseField>
+    
+    <ResponseField name="parent_consensus_timestamp" type="string | null">
+      Parent transaction timestamp for scheduled transactions
+    </ResponseField>
+    
+    <ResponseField name="result" type="string">
+      Transaction result (e.g., "SUCCESS", "INVALID_ACCOUNT_ID")
+    </ResponseField>
+    
+    <ResponseField name="scheduled" type="boolean">
+      Whether this is a scheduled transaction
+    </ResponseField>
+    
+    <ResponseField name="staking_reward_transfers" type="array">
+      Array of staking reward transfers
+    </ResponseField>
+    
+    <ResponseField name="token_transfers" type="array">
+      Array of token transfers in this transaction
+    </ResponseField>
+    
+    <ResponseField name="transaction_hash" type="string">
+      Transaction hash
+    </ResponseField>
+    
+    <ResponseField name="transaction_id" type="string">
+      Unique transaction ID
+    </ResponseField>
+    
+    <ResponseField name="transfers" type="Transfer[]">
+      Array of HBAR transfers
+      
+      <Expandable title="Transfer properties">
+        <ResponseField name="account" type="string">
+          Account ID
+        </ResponseField>
+        
+        <ResponseField name="amount" type="number">
+          Transfer amount in tinybars (negative for debits)
+        </ResponseField>
+        
+        <ResponseField name="is_approval" type="boolean">
+          Whether this transfer required approval
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="valid_duration_seconds" type="string">
+      Transaction validity duration
+    </ResponseField>
+    
+    <ResponseField name="valid_start_timestamp" type="string">
+      Transaction valid start time
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="links" type="Links">
+  Pagination links
+  
+  <Expandable title="Links properties">
+    <ResponseField name="next" type="string">
+      URL for the next page of results
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## TransactionType enum
+
+The `TransactionType` enum contains all supported Hedera transaction types:
+
+```typescript
+enum TransactionType {
+  CONSENSUSCREATETOPIC = 'CONSENSUSCREATETOPIC',
+  CONSENSUSDELETETOPIC = 'CONSENSUSDELETETOPIC',
+  CONSENSUSSUBMITMESSAGE = 'CONSENSUSSUBMITMESSAGE',
+  CONSENSUSUPDATETOPIC = 'CONSENSUSUPDATETOPIC',
+  CONTRACTCALL = 'CONTRACTCALL',
+  CONTRACTCREATEINSTANCE = 'CONTRACTCREATEINSTANCE',
+  CONTRACTDELETEINSTANCE = 'CONTRACTDELETEINSTANCE',
+  CONTRACTUPDATEINSTANCE = 'CONTRACTUPDATEINSTANCE',
+  CRYPTOADDLIVEHASH = 'CRYPTOADDLIVEHASH',
+  CRYPTOCREATEACCOUNT = 'CRYPTOCREATEACCOUNT',
+  CRYPTODELETE = 'CRYPTODELETE',
+  CRYPTODELETELIVEHASH = 'CRYPTODELETELIVEHASH',
+  CRYPTOTRANSFER = 'CRYPTOTRANSFER',
+  CRYPTOUPDATEACCOUNT = 'CRYPTOUPDATEACCOUNT',
+  FILEAPPEND = 'FILEAPPEND',
+  FILECREATE = 'FILECREATE',
+  FILEDELETE = 'FILEDELETE',
+  FILEUPDATE = 'FILEUPDATE',
+  FREEZE = 'FREEZE',
+  SCHEDULECREATE = 'SCHEDULECREATE',
+  SCHEDULEDELETE = 'SCHEDULEDELETE',
+  SCHEDULESIGN = 'SCHEDULESIGN',
+  SYSTEMDELETE = 'SYSTEMDELETE',
+  SYSTEMUNDELETE = 'SYSTEMUNDELETE',
+  TOKENASSOCIATE = 'TOKENASSOCIATE',
+  TOKENBURN = 'TOKENBURN',
+  TOKENCREATION = 'TOKENCREATION',
+  TOKENDELETION = 'TOKENDELETION',
+  TOKENDISSOCIATE = 'TOKENDISSOCIATE',
+  TOKENFEESCHEDULEUPDATE = 'TOKENFEESCHEDULEUPDATE',
+  TOKENFREEZE = 'TOKENFREEZE',
+  TOKENGRANTKYC = 'TOKENGRANTKYC',
+  TOKENMINT = 'TOKENMINT',
+  TOKENPAUSE = 'TOKENPAUSE',
+  TOKENREVOKEKYC = 'TOKENREVOKEKYC',
+  TOKENUNFREEZE = 'TOKENUNFREEZE',
+  TOKENUNPAUSE = 'TOKENUNPAUSE',
+  TOKENUPDATE = 'TOKENUPDATE',
+  TOKENWIPE = 'TOKENWIPE',
+  UNCHECKEDSUBMIT = 'UNCHECKEDSUBMIT',
+}
+```

@@ -1,0 +1,258 @@
+---
+title: Custom HTTP client
+description: Learn how to implement custom HTTP clients using the BaseMirrorClient interface for the Hedera Mirror Node TypeScript SDK
+---
+
+The Hedera Mirror Node TypeScript SDK is designed to be flexible with different HTTP clients. While the default `Client` uses the Fetch API, you can implement your own custom HTTP client by implementing the `BaseMirrorClient` interface.
+
+## BaseMirrorClient interface
+
+The `BaseMirrorClient` interface is simple and requires only two members:
+
+```typescript
+import { BasicParams } from "@tikz/hedera-mirror-node-ts";
+
+export interface Params extends Partial<BasicParams> {
+  [key: string]: any;
+}
+
+export interface BaseMirrorClient {
+  baseURL: string;
+  fetch<D = any>(baseURL: string, params: Params): Promise<D>;
+}
+```
+
+### Interface requirements
+
+- **`baseURL`**: A string property containing the base URL for the Mirror Node API (e.g., `https://testnet.mirrornode.hedera.com`)
+- **`fetch<D>`**: An async method that takes a URL path and query parameters, and returns a Promise of the response data
+
+## Built-in implementations
+
+### FetchClient (default)
+
+The default `Client` export uses the native Fetch API:
+
+```typescript
+import { BaseMirrorClient, Params } from "@tikz/hedera-mirror-node-ts";
+
+class FetchClient implements BaseMirrorClient {
+  constructor(public baseURL: string) {
+    if (this.baseURL.endsWith('/')) {
+      this.baseURL = this.baseURL.slice(0, -1);
+    }
+  }
+
+  public async fetch<D = any>(url: string, params: Params): Promise<D> {
+    if (!this.baseURL) throw new Error('no url set');
+
+    const queryString = new URLSearchParams(params as Record<string, string>).toString();
+    const fullURL = `${this.baseURL}${url}${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await fetch(fullURL);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json() as D;
+  }
+}
+```
+
+### AxiosClient (deprecated)
+
+The deprecated `AxiosClient` implementation uses Axios:
+
+```typescript
+import axios, { AxiosInstance } from "axios";
+import { BaseMirrorClient, Params } from "@tikz/hedera-mirror-node-ts";
+
+class AxiosClient implements BaseMirrorClient {
+  private baseApi: AxiosInstance;
+  
+  constructor(public baseURL: string) {
+    if (this.baseURL.endsWith('/')) {
+      this.baseURL = this.baseURL.slice(0, -1);
+    }
+    
+    this.baseApi = axios.create({ baseURL: this.baseURL });
+  }
+  
+  public async fetch<D = any>(url: string, params: Params): Promise<D> {
+    if (!this.baseURL) throw new Error('no url set');
+    const response = await this.baseApi.get(url, { params });
+    return response.data;
+  }
+}
+```
+
+## Implementing a custom client
+
+Here's a step-by-step guide to implementing your own HTTP client:
+
+<Steps>
+  <Step title="Import the interface">
+    Import `BaseMirrorClient` and `Params` from the SDK:
+
+    ```typescript
+    import { BaseMirrorClient, Params } from "@tikz/hedera-mirror-node-ts";
+    ```
+  </Step>
+
+  <Step title="Create your class">
+    Create a class that implements the `BaseMirrorClient` interface:
+
+    ```typescript
+    class CustomClient implements BaseMirrorClient {
+      public baseURL: string;
+      
+      constructor(baseURL: string) {
+        this.baseURL = baseURL.endsWith('/') 
+          ? baseURL.slice(0, -1) 
+          : baseURL;
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Implement the fetch method">
+    Implement the `fetch` method using your preferred HTTP library:
+
+    ```typescript
+    class CustomClient implements BaseMirrorClient {
+      public baseURL: string;
+      
+      constructor(baseURL: string) {
+        this.baseURL = baseURL.endsWith('/') 
+          ? baseURL.slice(0, -1) 
+          : baseURL;
+      }
+      
+      public async fetch<D = any>(url: string, params: Params): Promise<D> {
+        // Validate baseURL
+        if (!this.baseURL) {
+          throw new Error('no url set');
+        }
+        
+        // Build query string from params
+        const queryString = new URLSearchParams(
+          params as Record<string, string>
+        ).toString();
+        
+        // Construct full URL
+        const fullURL = `${this.baseURL}${url}${queryString ? `?${queryString}` : ''}`;
+        
+        // Make HTTP request using your library of choice
+        const response = await yourHttpLibrary.get(fullURL);
+        
+        // Return parsed JSON data
+        return response.data as D;
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Use your custom client">
+    Instantiate your custom client and pass it to the SDK functions:
+
+    ```typescript
+    import { topicMessages, accounts } from "@tikz/hedera-mirror-node-ts";
+    
+    const client = new CustomClient('https://testnet.mirrornode.hedera.com');
+    
+    // Use with any SDK function
+    const msgCursor = topicMessages(client)
+      .setTopicId('0.0.16430')
+      .setLimit(10);
+    
+    const messages = await msgCursor.get();
+    ```
+  </Step>
+</Steps>
+
+## Example: Got HTTP client
+
+Here's a complete example using the `got` HTTP library:
+
+```typescript
+import got from 'got';
+import { BaseMirrorClient, Params } from "@tikz/hedera-mirror-node-ts";
+
+class GotClient implements BaseMirrorClient {
+  constructor(public baseURL: string) {
+    if (this.baseURL.endsWith('/')) {
+      this.baseURL = this.baseURL.slice(0, -1);
+    }
+  }
+
+  public async fetch<D = any>(url: string, params: Params): Promise<D> {
+    if (!this.baseURL) throw new Error('no url set');
+
+    const response = await got(url, {
+      prefixUrl: this.baseURL,
+      searchParams: params as Record<string, string>,
+      responseType: 'json'
+    });
+
+    return response.body as D;
+  }
+}
+
+// Usage
+const client = new GotClient('https://mainnet-public.mirrornode.hedera.com');
+```
+
+## Best practices
+
+<Card title="Handle trailing slashes" icon="code">
+  Always normalize the `baseURL` by removing trailing slashes in the constructor to avoid double slashes in the final URL.
+</Card>
+
+<Card title="Validate baseURL" icon="shield-check">
+  Check that `baseURL` is set before making requests to prevent runtime errors.
+</Card>
+
+<Card title="Convert params to query string" icon="link">
+  Use `URLSearchParams` or your HTTP library's built-in parameter handling to properly encode query parameters.
+</Card>
+
+<Card title="Return typed responses" icon="brackets-curly">
+  Use the generic type parameter `<D>` to ensure proper TypeScript typing throughout the SDK.
+</Card>
+
+<Card title="Handle errors appropriately" icon="triangle-exclamation">
+  Implement proper error handling for network failures and HTTP errors.
+</Card>
+
+## How the SDK uses your client
+
+When you pass your custom client to SDK functions like `topicMessages()`, `accounts()`, or `transactions()`, the SDK:
+
+1. Stores the client instance in the internal resource classes (e.g., `TopicMessages`, `Accounts`)
+2. Calls your `fetch` method with the appropriate URL path (e.g., `/api/v1/topics/0.0.16430/messages`)
+3. Passes query parameters as the `params` object (e.g., `{ limit: 10, order: 'asc' }`)
+4. Expects JSON response data that matches the SDK's type definitions
+
+Example from the SDK's `TopicMessages` class:
+
+```typescript src/RestMirrorNode/TopicMessages.ts
+export class TopicMessages extends HasMoreMirrorNode {
+  constructor(
+    mirrorNodeClient: BaseMirrorClient,
+    protected url: string,
+    private topicId?: string
+  ) {
+    super(mirrorNodeClient);
+  }
+  
+  async get() {
+    if (!this.topicId) {
+      throw new Error("Topic ID must be set before calling get()");
+    }
+    
+    let url = `${this.url}/${this.topicId}/messages`;
+    return this.fetch(url); // Calls your custom client's fetch method
+  }
+}
+```

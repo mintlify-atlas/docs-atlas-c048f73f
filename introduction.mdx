@@ -1,0 +1,92 @@
+---
+title: Introduction
+description: TypeScript wrapper for the Hedera Mirror Node REST API with complete declarative abstraction layer
+---
+
+# Introduction
+
+The Hedera Mirror Node TypeScript SDK provides a typed, declarative interface for interacting with the Hedera Mirror Node REST API. Built with TypeScript, it offers complete type safety and an intuitive API for querying accounts, transactions, tokens, NFTs, smart contracts, and topic messages.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Fully typed" icon="code">
+    Complete TypeScript support with typed responses and parameters for all API endpoints
+  </Card>
+  <Card title="Flexible HTTP clients" icon="plug">
+    Works with both Fetch API (default) and Axios, with support for custom HTTP clients
+  </Card>
+  <Card title="Declarative API" icon="wand-magic-sparkles">
+    Chainable methods for building queries without remembering raw API parameters
+  </Card>
+  <Card title="Cursor pagination" icon="arrows-left-right">
+    Built-in pagination support with automatic cursor handling for large result sets
+  </Card>
+</CardGroup>
+
+## What you can query
+
+The SDK provides complete coverage of the Hedera Mirror Node REST API:
+
+- **Accounts** - Query account information, balances, and token holdings
+- **Transactions** - Search and filter transactions by account, type, result, and more
+- **Tokens** - Retrieve token information, balances, and metadata
+- **NFTs** - Query NFT collections, individual NFTs, and transaction history
+- **Topic messages** - Access HCS (Hedera Consensus Service) messages
+- **Smart contracts** - Query contract information and deployment details
+- **Network supply** - Get current network supply information
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install the SDK using npm, yarn, or pnpm
+  </Card>
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Start querying the Hedera Mirror Node in minutes
+  </Card>
+</CardGroup>
+
+## Network endpoints
+
+Connect to different Hedera networks using their respective mirror node endpoints:
+
+<CodeGroup>
+```typescript Testnet
+import { Client } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+```
+
+```typescript Mainnet
+import { Client } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://mainnet.mirrornode.hedera.com');
+```
+</CodeGroup>
+
+<Note>
+  The SDK uses the Fetch API by default (since v3.0.0), which reduces bundle size and eliminates the default Axios dependency.
+</Note>
+
+## Example usage
+
+Here's a quick example of querying topic messages:
+
+```typescript
+import { Client, topicMessages, optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+
+const msgCursor = topicMessages(client)
+  .setTopicId('0.0.16430')
+  .setLimit(10)
+  .order('asc')
+  .setSequenceNumber(optionalFilters.greaterThan(20));
+
+// Get first batch of messages
+const msgs = await msgCursor.get();
+
+// Get next batch
+const msgs2 = await msgCursor.next();
+```

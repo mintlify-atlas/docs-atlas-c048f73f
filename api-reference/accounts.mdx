@@ -1,0 +1,331 @@
+---
+title: Accounts
+description: Query account information and balances from the Hedera Mirror Node REST API
+---
+
+The `accounts()` function provides access to account data, including balances, keys, and transaction history.
+
+## Function signature
+
+```typescript
+import { accounts } from '@tikz/hedera-mirror-node-ts';
+
+const accountsCursor = accounts(client: BaseMirrorClient): Accounts
+```
+
+<ParamField path="client" type="BaseMirrorClient" required>
+  The mirror node client instance used to make API requests
+</ParamField>
+
+**Returns:** An `Accounts` instance for querying account data
+
+## Basic usage
+
+```typescript
+import { Client, accounts, optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+
+const accountCursor = accounts(client)
+  .setAccountId(optionalFilters.lessThan('0.0.15678177'))
+  .setLimit(2);
+
+const accountsData = await accountCursor.get();
+const nextAccountsData = await accountCursor.next();
+```
+
+## Accounts class methods
+
+### setAccountId()
+
+Filter accounts by account ID with optional comparison operators.
+
+```typescript
+setAccountId(val: OptionalFilters): Accounts
+```
+
+<ParamField path="val" type="OptionalFilters">
+  Account ID to filter by. Supports comparison operators like `gt:`, `gte:`, `lt:`, `lte:`, `ne:`, or a plain account ID string
+</ParamField>
+
+**Example:**
+
+```typescript
+const cursor = accounts(client)
+  .setAccountId('0.0.1234');
+
+// With comparison operators
+const cursor2 = accounts(client)
+  .setAccountId(optionalFilters.greaterThan('0.0.1000'));
+```
+
+### setBalance()
+
+Filter accounts by balance with optional comparison operators.
+
+```typescript
+setBalance(val: OptionalFilters): Accounts
+```
+
+<ParamField path="val" type="OptionalFilters">
+  Balance threshold to filter by. Supports comparison operators
+</ParamField>
+
+**Example:**
+
+```typescript
+const cursor = accounts(client)
+  .setBalance(optionalFilters.greaterThan('1000000'));
+```
+
+### setPublicKey()
+
+Filter accounts by public key.
+
+```typescript
+setPublicKey(val: string): Accounts
+```
+
+<ParamField path="val" type="string">
+  The public key associated with the account
+</ParamField>
+
+**Example:**
+
+```typescript
+const cursor = accounts(client)
+  .setPublicKey('3c3d546321ff6f63d701d2ec5c277095874e19f4a235bee1e6bb19258bf362be');
+```
+
+### setTransactionType()
+
+Filter accounts by transaction type.
+
+```typescript
+setTransactionType(val: TransactionType): Accounts
+```
+
+<ParamField path="val" type="TransactionType">
+  The transaction type to filter by (e.g., `CRYPTOCREATEACCOUNT`, `CRYPTOTRANSFER`)
+</ParamField>
+
+**Example:**
+
+```typescript
+import { TransactionType } from '@tikz/hedera-mirror-node-ts';
+
+const cursor = accounts(client)
+  .setTransactionType(TransactionType.CRYPTOCREATEACCOUNT);
+```
+
+### order()
+
+Set the order of results. Inherited from `HasMoreMirrorNode`.
+
+```typescript
+order(order: "asc" | "desc"): Accounts
+```
+
+<ParamField path="order" type="'asc' | 'desc'">
+  Sort order for results
+</ParamField>
+
+### setLimit()
+
+Set the maximum number of results per page. Inherited from `HasMoreMirrorNode`.
+
+```typescript
+setLimit(limit: number): Accounts
+```
+
+<ParamField path="limit" type="number">
+  Maximum number of results to return (default is 25)
+</ParamField>
+
+### timestamp()
+
+Filter by timestamp with optional comparison operators. Inherited from `HasMoreMirrorNode`.
+
+```typescript
+timestamp(timestamp: OptionalFilters): Accounts
+```
+
+<ParamField path="timestamp" type="OptionalFilters">
+  Timestamp to filter by. Supports comparison operators
+</ParamField>
+
+### get()
+
+Execute the query and return account data.
+
+```typescript
+get(): Promise<AccountsResponse>
+```
+
+**Returns:** A promise that resolves to the accounts response
+
+### next()
+
+Fetch the next page of results.
+
+```typescript
+next(): Promise<AccountsResponse | null>
+```
+
+**Returns:** A promise that resolves to the next page of accounts, or `null` if no more pages exist
+
+## Response types
+
+### AccountsResponse
+
+<ResponseField name="accounts" type="Account[]">
+  Array of account objects
+  
+  <Expandable title="Account properties">
+    <ResponseField name="account" type="string">
+      The account ID (e.g., "0.0.1234")
+    </ResponseField>
+    
+    <ResponseField name="alias" type="string | null">
+      Account alias if set
+    </ResponseField>
+    
+    <ResponseField name="auto_renew_period" type="number">
+      Auto-renewal period in seconds
+    </ResponseField>
+    
+    <ResponseField name="balance" type="Balance">
+      Account balance information
+      
+      <Expandable title="Balance properties">
+        <ResponseField name="balance" type="number">
+          Account balance in tinybars
+        </ResponseField>
+        
+        <ResponseField name="timestamp" type="string">
+          Timestamp of the balance snapshot
+        </ResponseField>
+        
+        <ResponseField name="tokens" type="Token[]">
+          Array of token balances
+          
+          <Expandable title="Token properties">
+            <ResponseField name="token_id" type="string">
+              Token ID
+            </ResponseField>
+            
+            <ResponseField name="balance" type="number">
+              Token balance
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="created_timestamp" type="string">
+      Account creation timestamp
+    </ResponseField>
+    
+    <ResponseField name="decline_reward" type="boolean">
+      Whether the account declines staking rewards
+    </ResponseField>
+    
+    <ResponseField name="deleted" type="boolean">
+      Whether the account is deleted
+    </ResponseField>
+    
+    <ResponseField name="ethereum_nonce" type="number">
+      Ethereum nonce for EVM compatibility
+    </ResponseField>
+    
+    <ResponseField name="evm_address" type="string">
+      EVM-compatible address
+    </ResponseField>
+    
+    <ResponseField name="expiry_timestamp" type="string">
+      Account expiration timestamp
+    </ResponseField>
+    
+    <ResponseField name="key" type="Key">
+      Account key information
+      
+      <Expandable title="Key properties">
+        <ResponseField name="_type" type="string">
+          Key type (e.g., "ED25519", "ECDSA_SECP256K1")
+        </ResponseField>
+        
+        <ResponseField name="key" type="string">
+          The key value in hexadecimal
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="max_automatic_token_associations" type="number">
+      Maximum automatic token associations allowed
+    </ResponseField>
+    
+    <ResponseField name="memo" type="string">
+      Account memo
+    </ResponseField>
+    
+    <ResponseField name="pending_reward" type="number">
+      Pending staking rewards
+    </ResponseField>
+    
+    <ResponseField name="receiver_sig_required" type="boolean">
+      Whether receiver signature is required
+    </ResponseField>
+    
+    <ResponseField name="staked_account_id" type="string | null">
+      Account ID staked to, if any
+    </ResponseField>
+    
+    <ResponseField name="staked_node_id" type="string | null">
+      Node ID staked to, if any
+    </ResponseField>
+    
+    <ResponseField name="stake_period_start" type="string | null">
+      Start of the current staking period
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="links" type="Links">
+  Pagination links
+  
+  <Expandable title="Links properties">
+    <ResponseField name="next" type="string">
+      URL for the next page of results
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Related types
+
+### OptionalFilters
+
+The `OptionalFilters` type allows filtering with comparison operators:
+
+```typescript
+type OptionalFilters = 
+  | `gt:${string}`    // Greater than
+  | `gte:${string}`   // Greater than or equal to
+  | `lt:${string}`    // Less than
+  | `lte:${string}`   // Less than or equal to
+  | `ne:${string}`    // Not equal to
+  | `eq:${string}`    // Equal to
+  | string;           // Plain value
+```
+
+Helper functions are available:
+
+```typescript
+import { optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
+optionalFilters.greaterThan(val)
+optionalFilters.greaterThanEqualTo(val)
+optionalFilters.lessThan(val)
+optionalFilters.lessThanEqualTo(val)
+optionalFilters.notEqualTo(val)
+optionalFilters.equalTo(val)
+```

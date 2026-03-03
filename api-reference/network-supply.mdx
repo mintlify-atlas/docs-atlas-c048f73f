@@ -1,0 +1,157 @@
+---
+title: Network supply
+description: Query HBAR supply information from the Hedera Mirror Node REST API
+---
+
+The `networkSupply()` function provides access to Hedera network supply data, including total supply and released supply of HBAR.
+
+## Function signature
+
+```typescript
+import { networkSupply } from '@tikz/hedera-mirror-node-ts';
+
+const supplyCursor = networkSupply(client: BaseMirrorClient): NetworkSupply
+```
+
+<ParamField path="client" type="BaseMirrorClient" required>
+  The mirror node client instance used to make API requests
+</ParamField>
+
+**Returns:** A `NetworkSupply` instance for querying network supply data
+
+## Basic usage
+
+```typescript
+import { Client, networkSupply } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+
+const supply = await networkSupply(client).get();
+
+console.log('Total Supply:', supply.total_supply);
+console.log('Released Supply:', supply.released_supply);
+console.log('Timestamp:', supply.timestamp);
+```
+
+## NetworkSupply class methods
+
+### get()
+
+Execute the query and return network supply data.
+
+```typescript
+get(): Promise<NetworkSupplyResponse>
+```
+
+**Returns:** A promise that resolves to the network supply response
+
+## Response types
+
+### NetworkSupplyResponse
+
+<ResponseField name="total_supply" type="string">
+  The total supply of HBAR in tinybars (including unreleased supply held by Hedera). This represents the maximum amount of HBAR that will ever exist (50 billion HBAR).
+</ResponseField>
+
+<ResponseField name="released_supply" type="string">
+  The released supply of HBAR in tinybars. This is the amount of HBAR that has been released into circulation and is available for use on the network.
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  The consensus timestamp when this supply data was recorded, in the format `seconds.nanoseconds`
+</ResponseField>
+
+## Examples
+
+### Get current supply
+
+```typescript
+import { Client, networkSupply } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://mainnet-public.mirrornode.hedera.com');
+
+const supply = await networkSupply(client).get();
+
+// Convert tinybars to HBAR
+const totalHbar = Number(supply.total_supply) / 100_000_000;
+const releasedHbar = Number(supply.released_supply) / 100_000_000;
+
+console.log(`Total Supply: ${totalHbar.toLocaleString()} HBAR`);
+console.log(`Released Supply: ${releasedHbar.toLocaleString()} HBAR`);
+console.log(`Unreleased: ${(totalHbar - releasedHbar).toLocaleString()} HBAR`);
+console.log(`Release Rate: ${((releasedHbar / totalHbar) * 100).toFixed(2)}%`);
+```
+
+### Monitor supply changes
+
+```typescript
+import { Client, networkSupply } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://mainnet-public.mirrornode.hedera.com');
+
+async function monitorSupply() {
+  const supply = await networkSupply(client).get();
+  
+  const releasedHbar = Number(supply.released_supply) / 100_000_000;
+  const timestamp = supply.timestamp;
+  
+  console.log(`[${new Date().toISOString()}]`);
+  console.log(`Released Supply: ${releasedHbar.toLocaleString()} HBAR`);
+  console.log(`Mirror Node Timestamp: ${timestamp}`);
+  console.log('---');
+}
+
+// Check supply every hour
+setInterval(monitorSupply, 60 * 60 * 1000);
+monitorSupply(); // Run immediately
+```
+
+### Compare testnet and mainnet supply
+
+```typescript
+import { Client, networkSupply } from '@tikz/hedera-mirror-node-ts';
+
+const testnetClient = new Client('https://testnet.mirrornode.hedera.com');
+const mainnetClient = new Client('https://mainnet-public.mirrornode.hedera.com');
+
+async function compareSupply() {
+  const testnetSupply = await networkSupply(testnetClient).get();
+  const mainnetSupply = await networkSupply(mainnetClient).get();
+  
+  console.log('Testnet:');
+  console.log('  Released:', Number(testnetSupply.released_supply) / 100_000_000, 'HBAR');
+  
+  console.log('\nMainnet:');
+  console.log('  Released:', Number(mainnetSupply.released_supply) / 100_000_000, 'HBAR');
+}
+
+compareSupply();
+```
+
+## Understanding HBAR supply
+
+### Total supply
+
+The total supply is fixed at **50 billion HBAR** (5,000,000,000,000,000,000 tinybars). This is the maximum amount of HBAR that will ever exist on the Hedera network.
+
+### Released supply
+
+The released supply represents the amount of HBAR that has been distributed and is in circulation. This includes:
+
+- HBAR purchased by users
+- HBAR distributed through ecosystem programs
+- HBAR earned as node rewards
+- HBAR used for transaction fees
+
+The released supply increases over time as Hedera releases more HBAR according to its distribution schedule.
+
+### Unreleased supply
+
+The difference between total supply and released supply represents HBAR that is held by Hedera and has not yet been released into circulation.
+
+## Notes
+
+- Supply values are returned in **tinybars**. To convert to HBAR, divide by 100,000,000 (1 HBAR = 100,000,000 tinybars)
+- The `timestamp` field uses Hedera's consensus timestamp format: `seconds.nanoseconds`
+- This endpoint does not support pagination as it returns a single supply snapshot
+- Supply data is updated regularly as the network processes transactions

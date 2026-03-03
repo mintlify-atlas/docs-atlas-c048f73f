@@ -1,0 +1,511 @@
+---
+title: Tokens
+description: Query fungible token information and balances from the Hedera Mirror Node REST API
+---
+
+The `tokenUtils()` function provides access to fungible token data, including token lists, detailed token information, and token balances.
+
+## Function signature
+
+```typescript
+import { tokenUtils } from '@tikz/hedera-mirror-node-ts';
+
+const tokenUtil = tokenUtils(client: BaseMirrorClient): TokenUtils
+```
+
+<ParamField path="client" type="BaseMirrorClient" required>
+  The mirror node client instance used to make API requests
+</ParamField>
+
+**Returns:** A `TokenUtils` instance with access to token-related methods
+
+## Basic usage
+
+```typescript
+import { Client, tokenUtils, TokenTypeFilter } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+const tokenUtil = tokenUtils(client);
+
+// Query tokens
+const tokenCursor = tokenUtil.Tokens
+  .setLimit(2)
+  .order('desc')
+  .setTokenType(TokenTypeFilter.FUNGIBLE_COMMON);
+
+const tokens = await tokenCursor.get();
+
+// Get token information
+const tokenInfo = await tokenUtil.TokenInfo
+  .setTokenId('0.0.123456')
+  .get();
+
+// Get token balances
+const balances = await tokenUtil.TokenBalance
+  .setTokenId('0.0.123456')
+  .get();
+```
+
+## TokenUtils properties
+
+### Tokens
+
+Access the `Tokens` class for querying multiple tokens.
+
+```typescript
+tokenUtil.Tokens: Tokens
+```
+
+Returns a new `Tokens` instance for querying token data.
+
+**Underlying endpoint:** `GET /api/v1/tokens`
+
+### TokenInfo
+
+Access the `TokenInfo` class for querying detailed information about a specific token.
+
+```typescript
+tokenUtil.TokenInfo: TokenInfo
+```
+
+Returns a new `TokenInfo` instance for querying detailed token information.
+
+**Underlying endpoint:** `GET /api/v1/tokens/{tokenId}`
+
+### TokenBalance
+
+Access the `TokenBalances` class for querying token balance information.
+
+```typescript
+tokenUtil.TokenBalance: TokenBalances
+```
+
+Returns a new `TokenBalances` instance for querying token balance data.
+
+**Underlying endpoint:** `GET /api/v1/tokens/{tokenId}/balances`
+
+## Tokens class methods
+
+Query multiple tokens with various filters.
+
+### setTokenId()
+
+Filter tokens by token ID.
+
+```typescript
+setTokenId(val: OptionalFilters): Tokens
+```
+
+<ParamField path="val" type="OptionalFilters">
+  Token ID to filter by. Supports comparison operators
+</ParamField>
+
+### setAccountId()
+
+Filter tokens by account ID (tokens associated with an account).
+
+```typescript
+setAccountId(val: OptionalFilters): Tokens
+```
+
+<ParamField path="val" type="OptionalFilters">
+  Account ID to filter by. Supports comparison operators
+</ParamField>
+
+### setPublicKey()
+
+Filter tokens by public key.
+
+```typescript
+setPublicKey(val: string): Tokens
+```
+
+<ParamField path="val" type="string">
+  Public key to filter by
+</ParamField>
+
+### setTokenType()
+
+Filter tokens by type (fungible or non-fungible).
+
+```typescript
+setTokenType(val: TokenTypeFilter): Tokens
+```
+
+<ParamField path="val" type="TokenTypeFilter">
+  Token type: `TokenTypeFilter.FUNGIBLE_COMMON` or `TokenTypeFilter.NON_FUNGIBLE_UNIQUE`
+</ParamField>
+
+**Example:**
+
+```typescript
+import { TokenTypeFilter } from '@tikz/hedera-mirror-node-ts';
+
+const fungibleTokens = await tokenUtil.Tokens
+  .setTokenType(TokenTypeFilter.FUNGIBLE_COMMON)
+  .get();
+
+const nftTokens = await tokenUtil.Tokens
+  .setTokenType(TokenTypeFilter.NON_FUNGIBLE_UNIQUE)
+  .get();
+```
+
+### get()
+
+Execute the query and return token data.
+
+```typescript
+get(): Promise<TokensResponse>
+```
+
+### next()
+
+Fetch the next page of results.
+
+```typescript
+next(): Promise<TokensResponse | null>
+```
+
+## TokenInfo class methods
+
+Query detailed information about a specific token.
+
+### setTokenId()
+
+Set the token ID to query.
+
+```typescript
+setTokenId(val: string): TokenInfo
+```
+
+<ParamField path="val" type="string" required>
+  Token ID (e.g., "0.0.123456")
+</ParamField>
+
+### get()
+
+Execute the query and return detailed token information.
+
+```typescript
+get(): Promise<TokenInfoResponse>
+```
+
+### TokenBalances
+
+Access token balances for this token without re-specifying the token ID.
+
+```typescript
+tokenInfo.TokenBalances: TokenBalances
+```
+
+**Example:**
+
+```typescript
+const tokenInfo = tokenUtil.TokenInfo.setTokenId('0.0.123456');
+const info = await tokenInfo.get();
+
+// Get balances for this token (token ID already set)
+const balances = await tokenInfo.TokenBalances.get();
+```
+
+## TokenBalances class methods
+
+Query token balance information.
+
+### setTokenId()
+
+Set the token ID to query balances for.
+
+```typescript
+setTokenId(val: string): TokenBalances
+```
+
+<ParamField path="val" type="string" required>
+  Token ID (e.g., "0.0.123456")
+</ParamField>
+
+### setAccountId()
+
+Filter balances by account ID.
+
+```typescript
+setAccountId(val: OptionalFilters): TokenBalances
+```
+
+<ParamField path="val" type="OptionalFilters">
+  Account ID to filter by. Supports comparison operators
+</ParamField>
+
+### setAccountBalance()
+
+Filter by account balance amount.
+
+```typescript
+setAccountBalance(val: OptionalFilters): TokenBalances
+```
+
+<ParamField path="val" type="OptionalFilters">
+  Balance threshold to filter by. Supports comparison operators
+</ParamField>
+
+### setPublicKey()
+
+Filter balances by public key.
+
+```typescript
+setPublicKey(val: string): TokenBalances
+```
+
+<ParamField path="val" type="string">
+  Public key to filter by
+</ParamField>
+
+### get()
+
+Execute the query and return token balance data.
+
+```typescript
+get(): Promise<TokenBalanceResponse>
+```
+
+### next()
+
+Fetch the next page of results.
+
+```typescript
+next(): Promise<TokenBalanceResponse | null>
+```
+
+## Response types
+
+### TokensResponse
+
+<ResponseField name="tokens" type="Token[]">
+  Array of token objects
+  
+  <Expandable title="Token properties">
+    <ResponseField name="token_id" type="string">
+      Token ID
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Token name
+    </ResponseField>
+    
+    <ResponseField name="symbol" type="string">
+      Token symbol
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      Token type ("FUNGIBLE_COMMON" or "NON_FUNGIBLE_UNIQUE")
+    </ResponseField>
+    
+    <ResponseField name="decimals" type="number">
+      Number of decimal places (fungible tokens only)
+    </ResponseField>
+    
+    <ResponseField name="metadata" type="string">
+      Token metadata
+    </ResponseField>
+    
+    <ResponseField name="admin_key" type="AdminKey | null">
+      Admin key for the token
+      
+      <Expandable title="AdminKey properties">
+        <ResponseField name="_type" type="string">
+          Key type
+        </ResponseField>
+        
+        <ResponseField name="key" type="string">
+          Key value in hexadecimal
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="links" type="Links">
+  Pagination links
+  
+  <Expandable title="Links properties">
+    <ResponseField name="next" type="string | null">
+      URL for the next page of results
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### TokenInfoResponse
+
+<ResponseField name="token_id" type="string">
+  Token ID
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Token name
+</ResponseField>
+
+<ResponseField name="symbol" type="string">
+  Token symbol
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  Token type
+</ResponseField>
+
+<ResponseField name="decimals" type="string">
+  Number of decimal places
+</ResponseField>
+
+<ResponseField name="treasury_account_id" type="string">
+  Treasury account ID
+</ResponseField>
+
+<ResponseField name="initial_supply" type="string">
+  Initial supply
+</ResponseField>
+
+<ResponseField name="total_supply" type="string">
+  Total supply
+</ResponseField>
+
+<ResponseField name="max_supply" type="string">
+  Maximum supply
+</ResponseField>
+
+<ResponseField name="supply_type" type="string">
+  Supply type ("INFINITE" or "FINITE")
+</ResponseField>
+
+<ResponseField name="supply_key" type="Key | null">
+  Supply key information
+</ResponseField>
+
+<ResponseField name="admin_key" type="Key | null">
+  Admin key information
+</ResponseField>
+
+<ResponseField name="freeze_key" type="Key | null">
+  Freeze key information
+</ResponseField>
+
+<ResponseField name="freeze_default" type="boolean">
+  Whether accounts are frozen by default
+</ResponseField>
+
+<ResponseField name="wipe_key" type="Key | null">
+  Wipe key information
+</ResponseField>
+
+<ResponseField name="kyc_key" type="Key | null">
+  KYC key information
+</ResponseField>
+
+<ResponseField name="pause_key" type="Key | null">
+  Pause key information
+</ResponseField>
+
+<ResponseField name="pause_status" type="string">
+  Current pause status
+</ResponseField>
+
+<ResponseField name="fee_schedule_key" type="Key | null">
+  Fee schedule key information
+</ResponseField>
+
+<ResponseField name="metadata_key" type="Key | null">
+  Metadata key information
+</ResponseField>
+
+<ResponseField name="metadata" type="string">
+  Token metadata
+</ResponseField>
+
+<ResponseField name="memo" type="string">
+  Token memo
+</ResponseField>
+
+<ResponseField name="created_timestamp" type="string">
+  Creation timestamp
+</ResponseField>
+
+<ResponseField name="modified_timestamp" type="string">
+  Last modification timestamp
+</ResponseField>
+
+<ResponseField name="deleted" type="boolean">
+  Whether the token is deleted
+</ResponseField>
+
+<ResponseField name="auto_renew_account" type="string">
+  Auto-renew account ID
+</ResponseField>
+
+<ResponseField name="auto_renew_period" type="number">
+  Auto-renew period in seconds
+</ResponseField>
+
+<ResponseField name="expiry_timestamp" type="number">
+  Expiration timestamp
+</ResponseField>
+
+<ResponseField name="custom_fees" type="CustomFees">
+  Custom fee information
+  
+  <Expandable title="CustomFees properties">
+    <ResponseField name="created_timestamp" type="string">
+      Timestamp when custom fees were created
+    </ResponseField>
+    
+    <ResponseField name="fixed_fees" type="array">
+      Array of fixed fees
+    </ResponseField>
+    
+    <ResponseField name="royalty_fees" type="array">
+      Array of royalty fees
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### TokenBalanceResponse
+
+<ResponseField name="timestamp" type="string">
+  Timestamp of the balance snapshot
+</ResponseField>
+
+<ResponseField name="balances" type="Balance[]">
+  Array of balance objects
+  
+  <Expandable title="Balance properties">
+    <ResponseField name="account" type="string">
+      Account ID
+    </ResponseField>
+    
+    <ResponseField name="balance" type="number">
+      Token balance
+    </ResponseField>
+    
+    <ResponseField name="decimals" type="number">
+      Number of decimal places for this token
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="links" type="Links">
+  Pagination links
+  
+  <Expandable title="Links properties">
+    <ResponseField name="next" type="string | null">
+      URL for the next page of results
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## TokenTypeFilter enum
+
+```typescript
+enum TokenTypeFilter {
+  ALL = 'all',
+  FUNGIBLE_COMMON = 'fungible_common',
+  NON_FUNGIBLE_UNIQUE = 'non_fungible_unique',
+}
+```

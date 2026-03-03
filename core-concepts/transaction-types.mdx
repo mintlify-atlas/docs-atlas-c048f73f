@@ -1,0 +1,691 @@
+---
+title: Transaction types
+description: Reference guide for the TransactionType enum and how to filter transactions by type in the Hedera Mirror Node TypeScript SDK
+---
+
+The `TransactionType` enum provides type-safe constants for filtering transactions by their operation type. This enum matches the transaction types available in the Hedera network.
+
+## TransactionType enum
+
+The complete `TransactionType` enum from the source code:
+
+```typescript
+export enum TransactionType {
+  CONSENSUSCREATETOPIC = 'CONSENSUSCREATETOPIC',
+  CONSENSUSDELETETOPIC = 'CONSENSUSDELETETOPIC',
+  CONSENSUSSUBMITMESSAGE = 'CONSENSUSSUBMITMESSAGE',
+  CONSENSUSUPDATETOPIC = 'CONSENSUSUPDATETOPIC',
+  CONTRACTCALL = 'CONTRACTCALL',
+  CONTRACTCREATEINSTANCE = 'CONTRACTCREATEINSTANCE',
+  CONTRACTDELETEINSTANCE = 'CONTRACTDELETEINSTANCE',
+  CONTRACTUPDATEINSTANCE = 'CONTRACTUPDATEINSTANCE',
+  CRYPTOADDLIVEHASH = 'CRYPTOADDLIVEHASH',
+  CRYPTOCREATEACCOUNT = 'CRYPTOCREATEACCOUNT',
+  CRYPTODELETE = 'CRYPTODELETE',
+  CRYPTODELETELIVEHASH = 'CRYPTODELETELIVEHASH',
+  CRYPTOTRANSFER = 'CRYPTOTRANSFER',
+  CRYPTOUPDATEACCOUNT = 'CRYPTOUPDATEACCOUNT',
+  FILEAPPEND = 'FILEAPPEND',
+  FILECREATE = 'FILECREATE',
+  FILEDELETE = 'FILEDELETE',
+  FILEUPDATE = 'FILEUPDATE',
+  FREEZE = 'FREEZE',
+  SCHEDULECREATE = 'SCHEDULECREATE',
+  SCHEDULEDELETE = 'SCHEDULEDELETE',
+  SCHEDULESIGN = 'SCHEDULESIGN',
+  SYSTEMDELETE = 'SYSTEMDELETE',
+  SYSTEMUNDELETE = 'SYSTEMUNDELETE',
+  TOKENASSOCIATE = 'TOKENASSOCIATE',
+  TOKENBURN = 'TOKENBURN',
+  TOKENCREATION = 'TOKENCREATION',
+  TOKENDELETION = 'TOKENDELETION',
+  TOKENDISSOCIATE = 'TOKENDISSOCIATE',
+  TOKENFEESCHEDULEUPDATE = 'TOKENFEESCHEDULEUPDATE',
+  TOKENFREEZE = 'TOKENFREEZE',
+  TOKENGRANTKYC = 'TOKENGRANTKYC',
+  TOKENMINT = 'TOKENMINT',
+  TOKENPAUSE = 'TOKENPAUSE',
+  TOKENREVOKEKYC = 'TOKENREVOKEKYC',
+  TOKENUNFREEZE = 'TOKENUNFREEZE',
+  TOKENUNPAUSE = 'TOKENUNPAUSE',
+  TOKENUPDATE = 'TOKENUPDATE',
+  TOKENWIPE = 'TOKENWIPE',
+  UNCHECKEDSUBMIT = 'UNCHECKEDSUBMIT',
+}
+```
+
+## Import and usage
+
+```typescript
+import { TransactionType } from '@hashgraph/hedera-mirror-node-ts';
+
+// Use with transactions query
+const txns = await transactions(mirrorClient)
+  .setTransactionType(TransactionType.CRYPTOTRANSFER)
+  .get();
+```
+
+## Transaction type categories
+
+### Consensus Service (HCS)
+
+Transactions related to the Hedera Consensus Service for topic-based messaging:
+
+<AccordionGroup>
+  <Accordion title="CONSENSUSCREATETOPIC">
+    Creates a new consensus topic for publishing messages.
+    
+    ```typescript
+    const topicCreations = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.CONSENSUSCREATETOPIC)
+      .setLimit(10)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="CONSENSUSDELETETOPIC">
+    Deletes an existing consensus topic.
+    
+    ```typescript
+    const topicDeletions = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.CONSENSUSDELETETOPIC)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="CONSENSUSSUBMITMESSAGE">
+    Submits a message to a consensus topic. Most commonly used HCS transaction type.
+    
+    ```typescript
+    const messages = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.CONSENSUSSUBMITMESSAGE)
+      .setLimit(100)
+      .order('desc')
+      .get();
+      
+    console.log(`Found ${messages.transactions.length} topic messages`);
+    ```
+  </Accordion>
+  
+  <Accordion title="CONSENSUSUPDATETOPIC">
+    Updates the properties of an existing consensus topic.
+    
+    ```typescript
+    const topicUpdates = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.CONSENSUSUPDATETOPIC)
+      .get();
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Smart Contracts
+
+Transactions for deploying and interacting with smart contracts:
+
+<AccordionGroup>
+  <Accordion title="CONTRACTCALL">
+    Calls a function on an existing smart contract.
+    
+    ```typescript
+    const contractCalls = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.CONTRACTCALL)
+      .setResult('success')
+      .setLimit(50)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="CONTRACTCREATEINSTANCE">
+    Creates a new smart contract instance.
+    
+    ```typescript
+    const contractCreations = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.CONTRACTCREATEINSTANCE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="CONTRACTDELETEINSTANCE">
+    Deletes a smart contract instance.
+    
+    ```typescript
+    const contractDeletions = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.CONTRACTDELETEINSTANCE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="CONTRACTUPDATEINSTANCE">
+    Updates the properties of a smart contract.
+    
+    ```typescript
+    const contractUpdates = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.CONTRACTUPDATEINSTANCE)
+      .get();
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Cryptocurrency
+
+Transactions for account and HBAR operations:
+
+<AccordionGroup>
+  <Accordion title="CRYPTOCREATEACCOUNT">
+    Creates a new Hedera account.
+    
+    ```typescript
+    const accountCreations = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.CRYPTOCREATEACCOUNT)
+      .setResult('success')
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="CRYPTOTRANSFER">
+    Transfers HBAR or tokens between accounts. Most commonly used transaction type.
+    
+    Real example from the test suite:
+    
+    ```typescript
+    const txnCursor = transactions(mirrorClient)
+      .setAccountId('0.0.1234')
+      .setLimit(10)
+      .setType('credit')
+      .setTransactionType(TransactionType.CRYPTOTRANSFER)
+      .setResult('success');
+      
+    const txns = await txnCursor.get();
+    
+    if (txns.transactions.length > 0) {
+      const creditTransfer = txns.transactions[0].transfers.find(
+        txn => txn.account === '0.0.1234'
+      );
+      console.log(`Credit amount: ${creditTransfer?.amount}`);
+      console.log(`Transaction name: ${txns.transactions[0].name}`);
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="CRYPTODELETE">
+    Deletes a Hedera account and transfers remaining balance.
+    
+    ```typescript
+    const accountDeletions = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.CRYPTODELETE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="CRYPTOUPDATEACCOUNT">
+    Updates properties of an existing account.
+    
+    ```typescript
+    const accountUpdates = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.CRYPTOUPDATEACCOUNT)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="CRYPTOADDLIVEHASH">
+    Adds a live hash to an account (rarely used).
+    
+    ```typescript
+    const liveHashAdds = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.CRYPTOADDLIVEHASH)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="CRYPTODELETELIVEHASH">
+    Removes a live hash from an account (rarely used).
+    
+    ```typescript
+    const liveHashDeletes = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.CRYPTODELETELIVEHASH)
+      .get();
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Token Service
+
+Transactions for creating and managing fungible and non-fungible tokens:
+
+<AccordionGroup>
+  <Accordion title="TOKENCREATION">
+    Creates a new fungible or non-fungible token type.
+    
+    ```typescript
+    const tokenCreations = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENCREATION)
+      .setResult('success')
+      .setLimit(20)
+      .get();
+      
+    console.log(`Found ${tokenCreations.transactions.length} token creations`);
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENMINT">
+    Mints new tokens (increases supply for fungible tokens or creates NFTs).
+    
+    ```typescript
+    const tokenMints = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENMINT)
+      .setResult('success')
+      .order('desc')
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENBURN">
+    Burns tokens (decreases supply).
+    
+    ```typescript
+    const tokenBurns = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENBURN)
+      .setResult('success')
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENASSOCIATE">
+    Associates a token with an account (required before receiving tokens).
+    
+    ```typescript
+    const tokenAssociations = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENASSOCIATE)
+      .setAccountId('0.0.1234')
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENDISSOCIATE">
+    Removes token association from an account.
+    
+    ```typescript
+    const tokenDissociations = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENDISSOCIATE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENDELETION">
+    Deletes a token type.
+    
+    ```typescript
+    const tokenDeletions = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENDELETION)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENUPDATE">
+    Updates token properties.
+    
+    ```typescript
+    const tokenUpdates = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENUPDATE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENWIPE">
+    Wipes tokens from an account (only by token wipe key).
+    
+    ```typescript
+    const tokenWipes = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENWIPE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENFREEZE">
+    Freezes token transfers for a specific account.
+    
+    ```typescript
+    const tokenFreezes = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENFREEZE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENUNFREEZE">
+    Unfreezes token transfers for a specific account.
+    
+    ```typescript
+    const tokenUnfreezes = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENUNFREEZE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENGRANTKYC">
+    Grants KYC status to an account for a token.
+    
+    ```typescript
+    const kycGrants = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENGRANTKYC)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENREVOKEKYC">
+    Revokes KYC status from an account for a token.
+    
+    ```typescript
+    const kycRevocations = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENREVOKEKYC)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENPAUSE">
+    Pauses all operations for a token.
+    
+    ```typescript
+    const tokenPauses = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENPAUSE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENUNPAUSE">
+    Unpauses a previously paused token.
+    
+    ```typescript
+    const tokenUnpauses = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENUNPAUSE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="TOKENFEESCHEDULEUPDATE">
+    Updates the custom fee schedule for a token.
+    
+    ```typescript
+    const feeUpdates = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.TOKENFEESCHEDULEUPDATE)
+      .get();
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### File Service
+
+Transactions for managing files on Hedera:
+
+<AccordionGroup>
+  <Accordion title="FILECREATE">
+    Creates a new file on Hedera.
+    
+    ```typescript
+    const fileCreations = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.FILECREATE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="FILEAPPEND">
+    Appends data to an existing file.
+    
+    ```typescript
+    const fileAppends = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.FILEAPPEND)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="FILEUPDATE">
+    Updates the contents of a file.
+    
+    ```typescript
+    const fileUpdates = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.FILEUPDATE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="FILEDELETE">
+    Deletes a file from Hedera.
+    
+    ```typescript
+    const fileDeletions = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.FILEDELETE)
+      .get();
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Scheduled Transactions
+
+Transactions for scheduling future operations:
+
+<AccordionGroup>
+  <Accordion title="SCHEDULECREATE">
+    Creates a scheduled transaction for future execution.
+    
+    ```typescript
+    const scheduleCreations = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.SCHEDULECREATE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="SCHEDULESIGN">
+    Adds a signature to a scheduled transaction.
+    
+    ```typescript
+    const scheduleSigns = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.SCHEDULESIGN)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="SCHEDULEDELETE">
+    Deletes a scheduled transaction before execution.
+    
+    ```typescript
+    const scheduleDeletions = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.SCHEDULEDELETE)
+      .get();
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### System Operations
+
+<AccordionGroup>
+  <Accordion title="FREEZE">
+    Network freeze operation (privileged operation).
+    
+    ```typescript
+    const freezes = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.FREEZE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="SYSTEMDELETE">
+    System-level delete operation (privileged operation).
+    
+    ```typescript
+    const systemDeletes = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.SYSTEMDELETE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="SYSTEMUNDELETE">
+    System-level undelete operation (privileged operation).
+    
+    ```typescript
+    const systemUndeletes = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.SYSTEMUNDELETE)
+      .get();
+    ```
+  </Accordion>
+  
+  <Accordion title="UNCHECKEDSUBMIT">
+    Submits a transaction without standard validation.
+    
+    ```typescript
+    const uncheckedSubmits = await transactions(mirrorClient)
+      .setTransactionType(TransactionType.UNCHECKEDSUBMIT)
+      .get();
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Combining with other filters
+
+Transaction type filtering can be combined with other filters for powerful queries:
+
+```typescript
+import { 
+  Client,
+  transactions,
+  TransactionType,
+  optionalFilters 
+} from '@hashgraph/hedera-mirror-node-ts';
+
+const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
+
+// Get successful token mints for the last 24 hours
+const oneDayAgo = `${Math.floor((Date.now() - 86400000) / 1000)}.000000000`;
+
+const recentMints = await transactions(mirrorClient)
+  .setTransactionType(TransactionType.TOKENMINT)
+  .setResult('success')
+  .timestamp(optionalFilters.greaterThan(oneDayAgo))
+  .setLimit(100)
+  .order('desc')
+  .get();
+
+console.log(`Found ${recentMints.transactions.length} token mints in the last 24 hours`);
+```
+
+## Response structure
+
+The transaction response includes the transaction name matching the enum value:
+
+```typescript
+interface Transaction {
+  bytes: null;
+  charged_tx_fee: number;
+  consensus_timestamp: string;
+  entity_id: string;
+  max_fee: string;
+  memo_base64: string;
+  name: string;  // Matches TransactionType enum value (e.g., "CRYPTOTRANSFER")
+  nft_transfers: any[];
+  node: string;
+  nonce: number;
+  parent_consensus_timestamp: null;
+  result: string;  // e.g., "SUCCESS"
+  scheduled: boolean;
+  staking_reward_transfers: any[];
+  token_transfers: any[];
+  transaction_hash: string;
+  transaction_id: string;
+  transfers: Transfer[];
+  valid_duration_seconds: string;
+  valid_start_timestamp: string;
+}
+```
+
+## Real-world usage patterns
+
+### Pattern 1: Audit account activity
+
+```typescript
+const accountId = '0.0.1234';
+
+// Get all transaction types for an account
+const allTxns = await transactions(mirrorClient)
+  .setAccountId(accountId)
+  .setLimit(100)
+  .get();
+
+// Group by transaction type
+const txnsByType = allTxns.transactions.reduce((acc, txn) => {
+  acc[txn.name] = (acc[txn.name] || 0) + 1;
+  return acc;
+}, {} as Record<string, number>);
+
+console.log('Transaction summary:', txnsByType);
+```
+
+### Pattern 2: Monitor token lifecycle
+
+```typescript
+// Track all operations for a token
+const tokenId = '0.0.5678';
+
+const tokenOperations = [
+  TransactionType.TOKENCREATION,
+  TransactionType.TOKENMINT,
+  TransactionType.TOKENBURN,
+  TransactionType.TOKENUPDATE,
+  TransactionType.TOKENDELETION
+];
+
+for (const txnType of tokenOperations) {
+  const txns = await transactions(mirrorClient)
+    .setTransactionType(txnType)
+    .setLimit(10)
+    .get();
+    
+  console.log(`${txnType}: ${txns.transactions.length} transactions`);
+}
+```
+
+### Pattern 3: HCS message analysis
+
+```typescript
+// Get all consensus submit message transactions
+const messageTxns = await transactions(mirrorClient)
+  .setTransactionType(TransactionType.CONSENSUSSUBMITMESSAGE)
+  .setLimit(100)
+  .order('desc')
+  .get();
+
+console.log(`Total messages: ${messageTxns.transactions.length}`);
+
+// Analyze success rate
+const successful = messageTxns.transactions.filter(
+  txn => txn.result === 'SUCCESS'
+).length;
+
+const successRate = (successful / messageTxns.transactions.length) * 100;
+console.log(`Success rate: ${successRate.toFixed(2)}%`);
+```
+
+## Type safety benefits
+
+Using the enum provides type safety and IDE autocomplete:
+
+```typescript
+// ✓ Type-safe - IDE autocomplete available
+await transactions(mirrorClient)
+  .setTransactionType(TransactionType.CRYPTOTRANSFER)
+  .get();
+
+// ✗ Typo would cause compile error
+await transactions(mirrorClient)
+  .setTransactionType(TransactionType.CRYPTOTRANFER)  // Error!
+  .get();
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Transactions API" href="/api-reference/transactions" icon="exchange">
+    Learn more about the Transactions API
+  </Card>
+  
+  <Card title="Optional filters" href="/core-concepts/optional-filters" icon="filter">
+    Combine transaction types with comparison filters
+  </Card>
+</CardGroup>

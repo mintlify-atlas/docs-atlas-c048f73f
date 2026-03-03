@@ -1,0 +1,312 @@
+---
+title: "TransactionType"
+description: "Enum containing all Hedera transaction types for filtering and identifying transactions"
+---
+
+## Overview
+
+The `TransactionType` enum provides type-safe constants for all transaction types supported by the Hedera network. Use these values to filter transactions by type when querying the Mirror Node API.
+
+## Enum definition
+
+```typescript
+enum TransactionType {
+  CONSENSUSCREATETOPIC = 'CONSENSUSCREATETOPIC',
+  CONSENSUSDELETETOPIC = 'CONSENSUSDELETETOPIC',
+  CONSENSUSSUBMITMESSAGE = 'CONSENSUSSUBMITMESSAGE',
+  CONSENSUSUPDATETOPIC = 'CONSENSUSUPDATETOPIC',
+  CONTRACTCALL = 'CONTRACTCALL',
+  CONTRACTCREATEINSTANCE = 'CONTRACTCREATEINSTANCE',
+  CONTRACTDELETEINSTANCE = 'CONTRACTDELETEINSTANCE',
+  CONTRACTUPDATEINSTANCE = 'CONTRACTUPDATEINSTANCE',
+  CRYPTOADDLIVEHASH = 'CRYPTOADDLIVEHASH',
+  CRYPTOCREATEACCOUNT = 'CRYPTOCREATEACCOUNT',
+  CRYPTODELETE = 'CRYPTODELETE',
+  CRYPTODELETELIVEHASH = 'CRYPTODELETELIVEHASH',
+  CRYPTOTRANSFER = 'CRYPTOTRANSFER',
+  CRYPTOUPDATEACCOUNT = 'CRYPTOUPDATEACCOUNT',
+  FILEAPPEND = 'FILEAPPEND',
+  FILECREATE = 'FILECREATE',
+  FILEDELETE = 'FILEDELETE',
+  FILEUPDATE = 'FILEUPDATE',
+  FREEZE = 'FREEZE',
+  SCHEDULECREATE = 'SCHEDULECREATE',
+  SCHEDULEDELETE = 'SCHEDULEDELETE',
+  SCHEDULESIGN = 'SCHEDULESIGN',
+  SYSTEMDELETE = 'SYSTEMDELETE',
+  SYSTEMUNDELETE = 'SYSTEMUNDELETE',
+  TOKENASSOCIATE = 'TOKENASSOCIATE',
+  TOKENBURN = 'TOKENBURN',
+  TOKENCREATION = 'TOKENCREATION',
+  TOKENDELETION = 'TOKENDELETION',
+  TOKENDISSOCIATE = 'TOKENDISSOCIATE',
+  TOKENFEESCHEDULEUPDATE = 'TOKENFEESCHEDULEUPDATE',
+  TOKENFREEZE = 'TOKENFREEZE',
+  TOKENGRANTKYC = 'TOKENGRANTKYC',
+  TOKENMINT = 'TOKENMINT',
+  TOKENPAUSE = 'TOKENPAUSE',
+  TOKENREVOKEKYC = 'TOKENREVOKEKYC',
+  TOKENUNFREEZE = 'TOKENUNFREEZE',
+  TOKENUNPAUSE = 'TOKENUNPAUSE',
+  TOKENUPDATE = 'TOKENUPDATE',
+  TOKENWIPE = 'TOKENWIPE',
+  UNCHECKEDSUBMIT = 'UNCHECKEDSUBMIT',
+}
+```
+
+## Transaction type categories
+
+### Consensus service transactions
+
+<ParamField path="CONSENSUSCREATETOPIC" type="string">
+  Create a new consensus topic for the Hedera Consensus Service (HCS).
+</ParamField>
+
+<ParamField path="CONSENSUSDELETETOPIC" type="string">
+  Delete an existing consensus topic.
+</ParamField>
+
+<ParamField path="CONSENSUSSUBMITMESSAGE" type="string">
+  Submit a message to a consensus topic.
+</ParamField>
+
+<ParamField path="CONSENSUSUPDATETOPIC" type="string">
+  Update the properties of an existing consensus topic.
+</ParamField>
+
+### Smart contract transactions
+
+<ParamField path="CONTRACTCALL" type="string">
+  Call a function on an existing smart contract.
+</ParamField>
+
+<ParamField path="CONTRACTCREATEINSTANCE" type="string">
+  Create and deploy a new smart contract instance.
+</ParamField>
+
+<ParamField path="CONTRACTDELETEINSTANCE" type="string">
+  Delete an existing smart contract instance.
+</ParamField>
+
+<ParamField path="CONTRACTUPDATEINSTANCE" type="string">
+  Update the properties of an existing smart contract.
+</ParamField>
+
+### Cryptocurrency transactions
+
+<ParamField path="CRYPTOADDLIVEHASH" type="string">
+  Add a live hash to an account.
+</ParamField>
+
+<ParamField path="CRYPTOCREATEACCOUNT" type="string">
+  Create a new Hedera account.
+</ParamField>
+
+<ParamField path="CRYPTODELETE" type="string">
+  Delete an existing Hedera account.
+</ParamField>
+
+<ParamField path="CRYPTODELETELIVEHASH" type="string">
+  Delete a live hash from an account.
+</ParamField>
+
+<ParamField path="CRYPTOTRANSFER" type="string">
+  Transfer HBAR or tokens between accounts.
+</ParamField>
+
+<ParamField path="CRYPTOUPDATEACCOUNT" type="string">
+  Update the properties of an existing account.
+</ParamField>
+
+### File service transactions
+
+<ParamField path="FILEAPPEND" type="string">
+  Append data to an existing file.
+</ParamField>
+
+<ParamField path="FILECREATE" type="string">
+  Create a new file on the Hedera File Service.
+</ParamField>
+
+<ParamField path="FILEDELETE" type="string">
+  Delete an existing file.
+</ParamField>
+
+<ParamField path="FILEUPDATE" type="string">
+  Update the contents or properties of an existing file.
+</ParamField>
+
+### System transactions
+
+<ParamField path="FREEZE" type="string">
+  Freeze the network for maintenance or upgrades.
+</ParamField>
+
+<ParamField path="SYSTEMDELETE" type="string">
+  System-level deletion of an entity.
+</ParamField>
+
+<ParamField path="SYSTEMUNDELETE" type="string">
+  System-level restoration of a deleted entity.
+</ParamField>
+
+<ParamField path="UNCHECKEDSUBMIT" type="string">
+  Submit a transaction without preliminary checks.
+</ParamField>
+
+### Scheduled transactions
+
+<ParamField path="SCHEDULECREATE" type="string">
+  Create a scheduled transaction for future execution.
+</ParamField>
+
+<ParamField path="SCHEDULEDELETE" type="string">
+  Delete a scheduled transaction.
+</ParamField>
+
+<ParamField path="SCHEDULESIGN" type="string">
+  Add a signature to a scheduled transaction.
+</ParamField>
+
+### Token service transactions
+
+<ParamField path="TOKENASSOCIATE" type="string">
+  Associate a token with an account to enable transfers.
+</ParamField>
+
+<ParamField path="TOKENBURN" type="string">
+  Burn (destroy) tokens from the treasury account.
+</ParamField>
+
+<ParamField path="TOKENCREATION" type="string">
+  Create a new fungible or non-fungible token.
+</ParamField>
+
+<ParamField path="TOKENDELETION" type="string">
+  Delete an existing token.
+</ParamField>
+
+<ParamField path="TOKENDISSOCIATE" type="string">
+  Dissociate a token from an account.
+</ParamField>
+
+<ParamField path="TOKENFEESCHEDULEUPDATE" type="string">
+  Update the custom fee schedule for a token.
+</ParamField>
+
+<ParamField path="TOKENFREEZE" type="string">
+  Freeze token transfers for a specific account.
+</ParamField>
+
+<ParamField path="TOKENGRANTKYC" type="string">
+  Grant KYC status to an account for a token.
+</ParamField>
+
+<ParamField path="TOKENMINT" type="string">
+  Mint new tokens to the treasury account.
+</ParamField>
+
+<ParamField path="TOKENPAUSE" type="string">
+  Pause all operations for a token.
+</ParamField>
+
+<ParamField path="TOKENREVOKEKYC" type="string">
+  Revoke KYC status from an account for a token.
+</ParamField>
+
+<ParamField path="TOKENUNFREEZE" type="string">
+  Unfreeze token transfers for a specific account.
+</ParamField>
+
+<ParamField path="TOKENUNPAUSE" type="string">
+  Resume operations for a paused token.
+</ParamField>
+
+<ParamField path="TOKENUPDATE" type="string">
+  Update the properties of an existing token.
+</ParamField>
+
+<ParamField path="TOKENWIPE" type="string">
+  Wipe tokens from an account (reducing balance).
+</ParamField>
+
+## Usage examples
+
+### Filter transactions by type
+
+```typescript
+import { RestMirrorNode, TransactionType } from '@hashgraph/hedera-mirror-node';
+
+const mirrorNode = new RestMirrorNode('testnet');
+
+// Get all token creation transactions
+const tokenCreations = await mirrorNode.getTransactions({
+  transactionType: TransactionType.TOKENCREATION
+});
+
+// Get all crypto transfers for an account
+const transfers = await mirrorNode.getAccountTransactions('0.0.1234', {
+  transactionType: TransactionType.CRYPTOTRANSFER
+});
+```
+
+### Filter multiple transaction types
+
+```typescript
+// Get all token-related transactions
+const tokenTxs = await mirrorNode.getTransactions({
+  transactionType: [
+    TransactionType.TOKENCREATION,
+    TransactionType.TOKENMINT,
+    TransactionType.TOKENBURN,
+    TransactionType.TOKENUPDATE
+  ]
+});
+```
+
+### Filter smart contract transactions
+
+```typescript
+// Get all contract calls for a specific contract
+const contractCalls = await mirrorNode.getContractTransactions('0.0.5678', {
+  transactionType: TransactionType.CONTRACTCALL
+});
+
+// Get all contract creation transactions
+const contractCreations = await mirrorNode.getTransactions({
+  transactionType: TransactionType.CONTRACTCREATEINSTANCE
+});
+```
+
+### Filter consensus service messages
+
+```typescript
+// Get all messages submitted to a topic
+const messages = await mirrorNode.getTopicMessages('0.0.9999', {
+  transactionType: TransactionType.CONSENSUSSUBMITMESSAGE
+});
+```
+
+### Check transaction type in results
+
+```typescript
+const transactions = await mirrorNode.getTransactions({
+  accountId: '0.0.1234',
+  limit: 10
+});
+
+transactions.transactions.forEach(tx => {
+  if (tx.name === TransactionType.CRYPTOTRANSFER) {
+    console.log('Found a crypto transfer:', tx.transaction_id);
+  } else if (tx.name === TransactionType.TOKENASSOCIATE) {
+    console.log('Found a token association:', tx.transaction_id);
+  }
+});
+```
+
+## Notes
+
+- Transaction type values are uppercase strings matching the Hedera protobuf definitions
+- Use the enum for type safety and IDE autocomplete support
+- Multiple transaction types can be filtered by passing an array
+- Not all transaction types may be available on all networks (mainnet, testnet, previewnet)

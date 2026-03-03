@@ -1,0 +1,167 @@
+---
+title: "TokenTypeFilter"
+description: "Enum for filtering tokens by type (fungible or non-fungible)"
+---
+
+## Overview
+
+The `TokenTypeFilter` enum allows you to filter tokens by their type when querying the Mirror Node API. Hedera supports both fungible tokens (similar to ERC-20) and non-fungible tokens (similar to ERC-721).
+
+## Enum definition
+
+```typescript
+enum TokenTypeFilter {
+  ALL = 'all',
+  FUNGIBLE_COMMON = 'fungible_common',
+  NON_FUNGIBLE_UNIQUE = 'non_fungible_unique',
+}
+```
+
+## Token type values
+
+<ParamField path="ALL" type="'all'">
+  Returns all tokens regardless of type. Includes both fungible and non-fungible tokens.
+  
+  ```typescript
+  TokenTypeFilter.ALL // 'all'
+  ```
+</ParamField>
+
+<ParamField path="FUNGIBLE_COMMON" type="'fungible_common'">
+  Returns only fungible tokens. These are divisible tokens with a common value, similar to ERC-20 tokens. Examples include stablecoins, utility tokens, and currencies.
+  
+  ```typescript
+  TokenTypeFilter.FUNGIBLE_COMMON // 'fungible_common'
+  ```
+</ParamField>
+
+<ParamField path="NON_FUNGIBLE_UNIQUE" type="'non_fungible_unique'">
+  Returns only non-fungible tokens (NFTs). These are unique, indivisible tokens, similar to ERC-721 tokens. Each token has a unique serial number and can have distinct metadata.
+  
+  ```typescript
+  TokenTypeFilter.NON_FUNGIBLE_UNIQUE // 'non_fungible_unique'
+  ```
+</ParamField>
+
+## Usage examples
+
+### Filter tokens by type
+
+```typescript
+import { RestMirrorNode, TokenTypeFilter } from '@hashgraph/hedera-mirror-node';
+
+const mirrorNode = new RestMirrorNode('testnet');
+
+// Get all fungible tokens
+const fungibleTokens = await mirrorNode.getTokens({
+  type: TokenTypeFilter.FUNGIBLE_COMMON
+});
+
+// Get all NFTs
+const nfts = await mirrorNode.getTokens({
+  type: TokenTypeFilter.NON_FUNGIBLE_UNIQUE
+});
+
+// Get all tokens (default behavior)
+const allTokens = await mirrorNode.getTokens({
+  type: TokenTypeFilter.ALL
+});
+```
+
+### Filter account tokens by type
+
+```typescript
+// Get all fungible tokens associated with an account
+const accountFungibleTokens = await mirrorNode.getAccountTokens('0.0.1234', {
+  type: TokenTypeFilter.FUNGIBLE_COMMON
+});
+
+// Get all NFTs owned by an account
+const accountNFTs = await mirrorNode.getAccountTokens('0.0.1234', {
+  type: TokenTypeFilter.NON_FUNGIBLE_UNIQUE
+});
+```
+
+### Combine with other filters
+
+```typescript
+import { optionalFilters } from '@hashgraph/hedera-mirror-node';
+
+// Get fungible tokens with supply greater than 1 million
+const popularTokens = await mirrorNode.getTokens({
+  type: TokenTypeFilter.FUNGIBLE_COMMON,
+  totalSupply: optionalFilters.greaterThan(1000000)
+});
+
+// Get NFT collections (non-fungible tokens)
+const nftCollections = await mirrorNode.getTokens({
+  type: TokenTypeFilter.NON_FUNGIBLE_UNIQUE,
+  limit: 50,
+  order: 'desc'
+});
+```
+
+### Check token type in results
+
+```typescript
+const tokens = await mirrorNode.getTokens({ limit: 10 });
+
+tokens.tokens.forEach(token => {
+  if (token.type === TokenTypeFilter.FUNGIBLE_COMMON) {
+    console.log(`${token.name} is a fungible token with ${token.decimals} decimals`);
+  } else if (token.type === TokenTypeFilter.NON_FUNGIBLE_UNIQUE) {
+    console.log(`${token.name} is an NFT collection with ${token.total_supply} NFTs`);
+  }
+});
+```
+
+### Filter token balances by type
+
+```typescript
+// Get an account's fungible token balances
+const fungibleBalances = await mirrorNode.getAccountTokenBalances('0.0.1234', {
+  type: TokenTypeFilter.FUNGIBLE_COMMON
+});
+
+console.log('Fungible token holdings:');
+fungibleBalances.balances.forEach(balance => {
+  console.log(`Token ${balance.token_id}: ${balance.balance}`);
+});
+
+// Get an account's NFT holdings
+const nftBalances = await mirrorNode.getAccountTokenBalances('0.0.1234', {
+  type: TokenTypeFilter.NON_FUNGIBLE_UNIQUE
+});
+
+console.log('NFT collections owned:');
+nftBalances.balances.forEach(balance => {
+  console.log(`Collection ${balance.token_id}: ${balance.balance} NFTs`);
+});
+```
+
+## Token type characteristics
+
+### Fungible tokens
+
+- **Divisible**: Can be divided into smaller units based on decimals (e.g., 0.5 tokens)
+- **Interchangeable**: All tokens of the same type have equal value
+- **Use cases**: Currencies, stablecoins, utility tokens, reward points
+- **Supply**: Total supply represents the sum of all units
+- **Decimals**: Typically have decimal places (0-18)
+
+### Non-fungible tokens (NFTs)
+
+- **Indivisible**: Cannot be divided; each token is a whole unit
+- **Unique**: Each token has a unique serial number and can have distinct metadata
+- **Use cases**: Digital art, collectibles, tickets, certificates, gaming items
+- **Supply**: Total supply represents the number of unique NFTs minted
+- **Decimals**: Always 0 (indivisible)
+- **Serial numbers**: Each NFT has a unique serial number within the collection
+
+## Notes
+
+- The `type` parameter uses lowercase values with underscores (`fungible_common`, `non_fungible_unique`)
+- When no type filter is specified, the API returns all token types by default
+- Fungible tokens support decimal places, while NFTs are always whole numbers
+- Use `TokenTypeFilter.NON_FUNGIBLE_UNIQUE` to work specifically with NFT collections
+- The token type is set at creation and cannot be changed afterward

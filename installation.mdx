@@ -1,0 +1,106 @@
+---
+title: Installation
+description: Install the Hedera Mirror Node TypeScript SDK in your project
+---
+
+# Installation
+
+The Hedera Mirror Node TypeScript SDK is available as an npm package and can be installed using your preferred package manager.
+
+## Install the package
+
+<CodeGroup>
+```bash npm
+npm install @tikz/hedera-mirror-node-ts
+```
+
+```bash yarn
+yarn add @tikz/hedera-mirror-node-ts
+```
+
+```bash pnpm
+pnpm add @tikz/hedera-mirror-node-ts
+```
+</CodeGroup>
+
+## Requirements
+
+The SDK requires:
+
+- **Node.js** 16 or higher
+- **TypeScript** 5.5.4 or higher (for TypeScript projects)
+
+<Note>
+  As of version 3.0.0, the SDK uses the Fetch API by default, which is available natively in Node.js 18+. For Node.js 16-17, you may need a polyfill.
+</Note>
+
+## Using Axios (optional)
+
+While the default client uses the Fetch API, you can still use Axios if needed for older browser compatibility or specific requirements.
+
+<Steps>
+  <Step title="Install Axios">
+    First, install Axios as a peer dependency:
+
+    <CodeGroup>
+    ```bash npm
+    npm install axios
+    ```
+
+    ```bash yarn
+    yarn add axios
+    ```
+
+    ```bash pnpm
+    pnpm add axios
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Import AxiosClient">
+    Import `AxiosClient` instead of the default `Client`:
+
+    ```typescript
+    import { AxiosClient } from '@tikz/hedera-mirror-node-ts';
+
+    const client = new AxiosClient('https://testnet.mirrornode.hedera.com');
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  The `AxiosClient` is deprecated and will be removed in a future version. We recommend using the default Fetch-based `Client` for new projects.
+</Warning>
+
+## Verify installation
+
+Create a simple test file to verify the installation:
+
+```typescript test.ts
+import { Client, networkSupply } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+
+const supply = await networkSupply(client).get();
+console.log('Network supply:', supply);
+```
+
+Run the file:
+
+<CodeGroup>
+```bash Node.js
+node --loader ts-node/esm test.ts
+```
+
+```bash tsx
+tsx test.ts
+```
+</CodeGroup>
+
+If the installation was successful, you should see the network supply information printed to the console.
+
+## Next steps
+
+<Card title="Quick start" icon="rocket" href="/quickstart">
+  Learn how to use the SDK with practical examples
+</Card>

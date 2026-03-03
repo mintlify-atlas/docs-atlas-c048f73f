@@ -1,0 +1,408 @@
+---
+title: NFTs
+description: Query NFT information, ownership, and transaction history from the Hedera Mirror Node REST API
+---
+
+The `nftUtils()` function provides access to NFT (Non-Fungible Token) data, including NFT lists, detailed NFT information, and transaction history.
+
+## Function signature
+
+```typescript
+import { nftUtils } from '@tikz/hedera-mirror-node-ts';
+
+const nftUtil = nftUtils(client: BaseMirrorClient): NFTUtils
+```
+
+<ParamField path="client" type="BaseMirrorClient" required>
+  The mirror node client instance used to make API requests
+</ParamField>
+
+**Returns:** An `NFTUtils` instance with access to NFT-related methods
+
+## Basic usage
+
+```typescript
+import { Client, nftUtils } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+const nftUtil = nftUtils(client);
+
+// Get NFTs for a token
+const nftsCursor = nftUtil.NFTs
+  .setTokenId('0.0.123456')
+  .order('asc');
+const nfts = await nftsCursor.get();
+
+// Get specific NFT info
+const nftInfo = await nftUtil.NFTInfo
+  .setTokenId('0.0.123456')
+  .setSerialNumber(1)
+  .get();
+
+// Get NFT transaction history
+const nftTxns = await nftUtil.NFTTransactionHistory
+  .setTokenId('0.0.123456')
+  .setSerialNumber(1)
+  .get();
+```
+
+## NFTUtils properties
+
+### NFTs
+
+Access the `NFTs` class for querying multiple NFTs.
+
+```typescript
+nftUtil.NFTs: NFTs
+```
+
+Returns a new `NFTs` instance for querying NFT data.
+
+**Underlying endpoint:** `GET /api/v1/tokens/{tokenId}/nfts`
+
+### NFTInfo
+
+Access the `NFTInfo` class for querying detailed information about a specific NFT.
+
+```typescript
+nftUtil.NFTInfo: NFTInfo
+```
+
+Returns a new `NFTInfo` instance for querying detailed NFT information.
+
+**Underlying endpoint:** `GET /api/v1/tokens/{tokenId}/nfts/{serialNumber}`
+
+### NFTTransactionHistory
+
+Access the `NFTTransactionHistory` class for querying NFT transaction history.
+
+```typescript
+nftUtil.NFTTransactionHistory: NFTTransactionHistory
+```
+
+Returns a new `NFTTransactionHistory` instance for querying NFT transaction history.
+
+**Underlying endpoint:** `GET /api/v1/tokens/{tokenId}/nfts/{serialNumber}/transactions`
+
+## NFTs class methods
+
+Query multiple NFTs associated with a token ID or owned by an account.
+
+### setTokenId()
+
+Set the token ID to query NFTs from.
+
+```typescript
+setTokenId(val: string): NFTs
+```
+
+<ParamField path="val" type="string" required>
+  Token ID (e.g., "0.0.123456")
+</ParamField>
+
+### setAccountId()
+
+Filter NFTs by owner account ID.
+
+```typescript
+setAccountId(val: OptionalFilters): NFTs
+```
+
+<ParamField path="val" type="OptionalFilters">
+  Account ID to filter by. Supports comparison operators
+</ParamField>
+
+**Example:**
+
+```typescript
+// Get all NFTs owned by an account
+const myNFTs = await nftUtil.NFTs
+  .setTokenId('0.0.123456')
+  .setAccountId('0.0.1234')
+  .get();
+```
+
+### get()
+
+Execute the query and return NFT data.
+
+```typescript
+get(): Promise<NFTsResponse>
+```
+
+### next()
+
+Fetch the next page of results.
+
+```typescript
+next(): Promise<NFTsResponse | null>
+```
+
+## NFTInfo class methods
+
+Query detailed information about a specific NFT.
+
+### setTokenId()
+
+Set the token ID of the NFT.
+
+```typescript
+setTokenId(val: string): NFTInfo
+```
+
+<ParamField path="val" type="string" required>
+  Token ID (e.g., "0.0.123456")
+</ParamField>
+
+### setSerialNumber()
+
+Set the serial number of the NFT.
+
+```typescript
+setSerialNumber(val: number): NFTInfo
+```
+
+<ParamField path="val" type="number" required>
+  Serial number of the NFT
+</ParamField>
+
+### get()
+
+Execute the query and return NFT information.
+
+```typescript
+get(): Promise<NFT>
+```
+
+### getNFTTransactionHistory
+
+Access transaction history for this NFT without re-specifying the token ID and serial number.
+
+```typescript
+nftInfo.getNFTTransactionHistory: NFTTransactionHistory
+```
+
+**Example:**
+
+```typescript
+const nftInfoCursor = nftUtil.NFTInfo
+  .setTokenId('0.0.123456')
+  .setSerialNumber(1);
+
+const nftInfo = await nftInfoCursor.get();
+
+// Get transaction history (token ID and serial already set)
+const history = await nftInfoCursor.getNFTTransactionHistory.get();
+```
+
+## NFTTransactionHistory class methods
+
+Query transaction history for a specific NFT.
+
+### setTokenId()
+
+Set the token ID of the NFT.
+
+```typescript
+setTokenId(val: string): NFTTransactionHistory
+```
+
+<ParamField path="val" type="string" required>
+  Token ID (e.g., "0.0.123456")
+</ParamField>
+
+### setSerialNumber()
+
+Set the serial number of the NFT.
+
+```typescript
+setSerialNumber(val: number): NFTTransactionHistory
+```
+
+<ParamField path="val" type="number" required>
+  Serial number of the NFT
+</ParamField>
+
+### get()
+
+Execute the query and return transaction history.
+
+```typescript
+get(): Promise<NftTransactionHistoryResponse>
+```
+
+### next()
+
+Fetch the next page of results.
+
+```typescript
+next(): Promise<NftTransactionHistoryResponse | null>
+```
+
+## Response types
+
+### NFTsResponse
+
+<ResponseField name="nfts" type="NFT[]">
+  Array of NFT objects
+  
+  <Expandable title="NFT properties">
+    <ResponseField name="token_id" type="string">
+      Token ID of the NFT collection
+    </ResponseField>
+    
+    <ResponseField name="serial_number" type="number">
+      Unique serial number of this NFT
+    </ResponseField>
+    
+    <ResponseField name="account_id" type="string">
+      Current owner account ID
+    </ResponseField>
+    
+    <ResponseField name="metadata" type="string">
+      NFT metadata (base64 encoded)
+    </ResponseField>
+    
+    <ResponseField name="created_timestamp" type="string">
+      Timestamp when the NFT was minted
+    </ResponseField>
+    
+    <ResponseField name="modified_timestamp" type="string">
+      Timestamp when the NFT was last modified
+    </ResponseField>
+    
+    <ResponseField name="deleted" type="boolean">
+      Whether the NFT is deleted
+    </ResponseField>
+    
+    <ResponseField name="spender" type="string | null">
+      Account ID approved to spend/transfer this NFT
+    </ResponseField>
+    
+    <ResponseField name="delegating_spender" type="string | null">
+      Account ID with delegated spending rights
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="links" type="Links">
+  Pagination links
+  
+  <Expandable title="Links properties">
+    <ResponseField name="next" type="string | null">
+      URL for the next page of results
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### NFT (single NFT response)
+
+When querying a single NFT via `NFTInfo.get()`, the response is a single `NFT` object with the same properties as listed above in the NFT array.
+
+### NftTransactionHistoryResponse
+
+<ResponseField name="transactions" type="Transaction[]">
+  Array of transaction objects
+  
+  <Expandable title="Transaction properties">
+    <ResponseField name="transaction_id" type="string">
+      Unique transaction ID
+    </ResponseField>
+    
+    <ResponseField name="consensus_timestamp" type="string">
+      Consensus timestamp of the transaction
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      Transaction type (e.g., "TOKENMINT", "CRYPTOTRANSFER")
+    </ResponseField>
+    
+    <ResponseField name="nonce" type="number">
+      Transaction nonce
+    </ResponseField>
+    
+    <ResponseField name="sender_account_id" type="string | null">
+      Sender account ID (null for mints)
+    </ResponseField>
+    
+    <ResponseField name="receiver_account_id" type="string">
+      Receiver account ID
+    </ResponseField>
+    
+    <ResponseField name="is_approval" type="boolean">
+      Whether this transfer was approved by a spender
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="links" type="Links">
+  Pagination links
+  
+  <Expandable title="Links properties">
+    <ResponseField name="next" type="string | null">
+      URL for the next page of results
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Advanced examples
+
+### Query NFTs by owner
+
+```typescript
+import { Client, nftUtils } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+const nftUtil = nftUtils(client);
+
+// Get all NFTs from a collection owned by a specific account
+const cursor = nftUtil.NFTs
+  .setTokenId('0.0.123456')
+  .setAccountId('0.0.1234')
+  .setLimit(50);
+
+const response = await cursor.get();
+
+console.log(`Found ${response.nfts.length} NFTs`);
+
+for (const nft of response.nfts) {
+  console.log(`NFT #${nft.serial_number} - Owner: ${nft.account_id}`);
+}
+```
+
+### Track NFT ownership history
+
+```typescript
+const nftUtil = nftUtils(client);
+
+// Get transaction history for a specific NFT
+const history = await nftUtil.NFTTransactionHistory
+  .setTokenId('0.0.123456')
+  .setSerialNumber(42)
+  .order('asc')
+  .get();
+
+console.log('NFT Ownership History:');
+for (const tx of history.transactions) {
+  if (tx.type === 'TOKENMINT') {
+    console.log(`Minted to ${tx.receiver_account_id} at ${tx.consensus_timestamp}`);
+  } else if (tx.type === 'CRYPTOTRANSFER') {
+    console.log(`Transferred from ${tx.sender_account_id} to ${tx.receiver_account_id} at ${tx.consensus_timestamp}`);
+  }
+}
+```
+
+### Decode NFT metadata
+
+```typescript
+const nft = await nftUtil.NFTInfo
+  .setTokenId('0.0.123456')
+  .setSerialNumber(1)
+  .get();
+
+// Decode base64 metadata
+const metadata = Buffer.from(nft.metadata, 'base64').toString('utf-8');
+const metadataJson = JSON.parse(metadata);
+
+console.log('NFT Metadata:', metadataJson);
+```

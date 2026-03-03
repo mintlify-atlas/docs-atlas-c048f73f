@@ -1,0 +1,289 @@
+---
+title: Topic messages
+description: Query consensus topic messages from the Hedera Mirror Node REST API
+---
+
+The `topicMessages()` function provides access to consensus topic messages submitted to the Hedera Consensus Service (HCS).
+
+## Function signature
+
+```typescript
+import { topicMessages } from '@tikz/hedera-mirror-node-ts';
+
+const messagesCursor = topicMessages(client: BaseMirrorClient, topicId?: string): TopicMessages
+```
+
+<ParamField path="client" type="BaseMirrorClient" required>
+  The mirror node client instance used to make API requests
+</ParamField>
+
+<ParamField path="topicId" type="string">
+  Optional topic ID to query messages from
+</ParamField>
+
+**Returns:** A `TopicMessages` instance for querying topic message data
+
+## Basic usage
+
+```typescript
+import { Client, topicMessages, optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+
+const msgCursor = topicMessages(client)
+  .setTopicId('0.0.16430')
+  .setLimit(10)
+  .order('asc')
+  .setSequenceNumber(optionalFilters.greaterThan(20));
+
+// Get initial data (20 < sequenceNumber <= 30)
+const msgs = await msgCursor.get();
+
+// Get next set of data (30 < sequenceNumber <= 40)
+const msgs2 = await msgCursor.next();
+```
+
+## Fetch single message by sequence number
+
+```typescript
+const message = await topicMessages(client)
+  .setTopicId('0.0.16430')
+  .setSequenceNumber(42)
+  .get();
+```
+
+<Note>
+  When a specific sequence number (not an OptionalFilter) is set, all other query parameters are ignored and a single message is returned.
+</Note>
+
+## TopicMessages class methods
+
+### setTopicId()
+
+Set the topic ID to query messages from.
+
+```typescript
+setTopicId(val: string): TopicMessages
+```
+
+<ParamField path="val" type="string" required>
+  The topic ID (e.g., "0.0.16430")
+</ParamField>
+
+**Example:**
+
+```typescript
+const cursor = topicMessages(client)
+  .setTopicId('0.0.16430');
+```
+
+### setSequenceNumber()
+
+Filter messages by sequence number, or fetch a specific message.
+
+```typescript
+setSequenceNumber(val: OptionalFilters | number): TopicMessages
+```
+
+<ParamField path="val" type="OptionalFilters | number">
+  Sequence number to filter by. Can be:
+  - A number to fetch a single specific message
+  - An `OptionalFilters` string to filter by range (e.g., `gt:20`, `gte:10`)
+</ParamField>
+
+**Examples:**
+
+<Tabs>
+  <Tab title="Filter by range">
+    ```typescript
+    // Get messages with sequence number greater than 20
+    const cursor = topicMessages(client)
+      .setTopicId('0.0.16430')
+      .setSequenceNumber(optionalFilters.greaterThan(20));
+    ```
+  </Tab>
+  
+  <Tab title="Fetch specific message">
+    ```typescript
+    // Get message with sequence number 42
+    const cursor = topicMessages(client)
+      .setTopicId('0.0.16430')
+      .setSequenceNumber(42);
+    
+    const message = await cursor.get();
+    ```
+  </Tab>
+</Tabs>
+
+### order()
+
+Set the order of results. Inherited from `HasMoreMirrorNode`.
+
+```typescript
+order(order: "asc" | "desc"): TopicMessages
+```
+
+<ParamField path="order" type="'asc' | 'desc'">
+  Sort order for results
+</ParamField>
+
+### setLimit()
+
+Set the maximum number of results per page. Inherited from `HasMoreMirrorNode`.
+
+```typescript
+setLimit(limit: number): TopicMessages
+```
+
+<ParamField path="limit" type="number">
+  Maximum number of results to return
+</ParamField>
+
+### timestamp()
+
+Filter by timestamp. Inherited from `HasMoreMirrorNode`.
+
+```typescript
+timestamp(timestamp: OptionalFilters): TopicMessages
+```
+
+<ParamField path="timestamp" type="OptionalFilters">
+  Timestamp to filter by. Supports comparison operators
+</ParamField>
+
+### get()
+
+Execute the query and return message data.
+
+```typescript
+get(): Promise<MessagesResponse | Message>
+```
+
+**Returns:** 
+- `MessagesResponse` when querying multiple messages
+- `Message` when fetching a single message by sequence number
+
+### next()
+
+Fetch the next page of results.
+
+```typescript
+next(): Promise<MessagesResponse | null>
+```
+
+**Returns:** A promise that resolves to the next page of messages, or `null` if no more pages exist
+
+## Response types
+
+### MessagesResponse
+
+<ResponseField name="messages" type="Message[]">
+  Array of message objects
+  
+  <Expandable title="Message properties">
+    <ResponseField name="consensus_timestamp" type="string">
+      Consensus timestamp of the message
+    </ResponseField>
+    
+    <ResponseField name="topic_id" type="string">
+      Topic ID the message was submitted to
+    </ResponseField>
+    
+    <ResponseField name="sequence_number" type="number">
+      Sequence number of the message within the topic
+    </ResponseField>
+    
+    <ResponseField name="message" type="string">
+      Message content (base64 encoded)
+    </ResponseField>
+    
+    <ResponseField name="running_hash" type="string">
+      Running hash of all messages in the topic
+    </ResponseField>
+    
+    <ResponseField name="running_hash_version" type="number">
+      Version of the running hash algorithm
+    </ResponseField>
+    
+    <ResponseField name="payer_account_id" type="string">
+      Account ID that paid for the message submission
+    </ResponseField>
+    
+    <ResponseField name="chunk_info" type="ChunkInfo">
+      Information about message chunking for large messages
+      
+      <Expandable title="ChunkInfo properties">
+        <ResponseField name="initial_transaction_id" type="InitialTransactionId">
+          Transaction ID of the first chunk
+          
+          <Expandable title="InitialTransactionId properties">
+            <ResponseField name="account_id" type="string">
+              Account ID that initiated the transaction
+            </ResponseField>
+            
+            <ResponseField name="nonce" type="number">
+              Transaction nonce
+            </ResponseField>
+            
+            <ResponseField name="scheduled" type="boolean">
+              Whether this is a scheduled transaction
+            </ResponseField>
+            
+            <ResponseField name="transaction_valid_start" type="string">
+              Transaction valid start timestamp
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+        
+        <ResponseField name="number" type="number">
+          Chunk number (1-based index)
+        </ResponseField>
+        
+        <ResponseField name="total" type="number">
+          Total number of chunks for this message
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="links" type="Links">
+  Pagination links
+  
+  <Expandable title="Links properties">
+    <ResponseField name="next" type="string">
+      URL for the next page of results
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Message
+
+When fetching a single message by sequence number, the response is a single `Message` object with the same properties listed above.
+
+## Advanced example
+
+```typescript
+import { Client, topicMessages, optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+
+// Query messages in a range
+const cursor = topicMessages(client)
+  .setTopicId('0.0.16430')
+  .setSequenceNumber(optionalFilters.greaterThan(100))
+  .setLimit(25)
+  .order('asc')
+  .timestamp(optionalFilters.greaterThan('1234567890.000000000'));
+
+const response = await cursor.get();
+
+for (const message of response.messages) {
+  // Decode base64 message content
+  const content = Buffer.from(message.message, 'base64').toString('utf-8');
+  console.log(`Message ${message.sequence_number}: ${content}`);
+}
+
+// Fetch next page
+const nextPage = await cursor.next();
+```

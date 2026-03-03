@@ -1,0 +1,328 @@
+---
+title: Pagination
+description: Learn how to paginate through large result sets using the next() method and links in the Hedera Mirror Node TypeScript SDK
+---
+
+The Hedera Mirror Node REST API returns paginated results for queries that may return large datasets. The SDK provides a simple and intuitive pagination system through the `HasMoreMirrorNode` base class.
+
+## How pagination works
+
+All query classes that support pagination extend `HasMoreMirrorNode`, which provides:
+
+1. Automatic tracking of pagination links in responses
+2. A `next()` method to fetch the next page of results
+3. Chainable methods to configure pagination (limit, order)
+
+### Response structure
+
+Mirror Node API responses include a `links` object with a `next` field:
+
+```typescript
+interface Response {
+  [k: string]: any;
+  links?: { next?: string | null };
+}
+```
+
+## Basic pagination example
+
+Here's a real-world example from the test suite showing how to paginate through topic messages:
+
+```typescript
+import { Client, topicMessages, optionalFilters } from '@hashgraph/hedera-mirror-node-ts';
+
+const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
+
+const msgCursor = topicMessages(mirrorClient)
+  .setTopicId('0.0.1234')
+  .setLimit(10)
+  .order('asc')
+  .setSequenceNumber(optionalFilters.greaterThan(20));
+
+// Get first page
+const msgs = await msgCursor.get();
+console.log(`First page: ${msgs.messages.length} messages`);
+
+// Get second page
+const msgs2 = await msgCursor.next();
+if (msgs2 && msgs2.messages.length > 0) {
+  console.log(`Second page: ${msgs2.messages.length} messages`);
+  // Verify sequence numbers are in order
+  const lastSeqFromFirstPage = msgs.messages[msgs.messages.length - 1].sequence_number;
+  const firstSeqFromSecondPage = msgs2.messages[0].sequence_number;
+  console.log(`Sequence continues: ${firstSeqFromSecondPage} > ${lastSeqFromFirstPage}`);
+}
+```
+
+## The next() method
+
+The `next()` method is defined in `HasMoreMirrorNode` and handles pagination automatically:
+
+```typescript
+async next(): Promise<D | null> {
+  if (!this.nextLink) return null;
+  const res = await this.mirrorClient.fetch<D>(this.nextLink, {});
+  this.nextLink = res.links?.next;
+  return res;
+}
+```
+
+### Key behaviors
+
+- Returns `null` when there are no more pages
+- Automatically updates the internal `nextLink` for subsequent calls
+- Uses empty params (`{}`) since pagination URL includes all parameters
+
+## Pagination with accounts
+
+Example showing pagination through account data:
+
+```typescript
+import { Client, accounts } from '@hashgraph/hedera-mirror-node-ts';
+
+const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
+
+const accountCursor = accounts(mirrorClient)
+  .setLimit(2)
+  .order('desc');
+
+// Get first page
+const accounts1 = await accountCursor.get();
+console.log(`Got ${accounts1.accounts.length} accounts`);
+console.log(`First account: ${accounts1.accounts[0].account}`);
+console.log(`Second account: ${accounts1.accounts[1].account}`);
+
+// Get next page
+const accounts2 = await accountCursor.next();
+if (accounts2) {
+  console.log(`Next page: ${accounts2.accounts.length} accounts`);
+}
+```
+
+## Pagination with transactions
+
+Example showing pagination through transaction data:
+
+```typescript
+import { 
+  Client, 
+  transactions, 
+  TransactionType 
+} from '@hashgraph/hedera-mirror-node-ts';
+
+const mirrorClient = new Client('https://testnet.mirrornode.hedera.com/');
+
+const transactionCursor = transactions(mirrorClient)
+  .setAccountId('0.0.1234')
+  .setLimit(10)
+  .setType('credit')
+  .setTransactionType(TransactionType.CRYPTOTRANSFER)
+  .setResult('success');
+
+// Get first page
+const txns = await transactionCursor.get();
+console.log(`Found ${txns.transactions.length} transactions`);
+
+// Get all remaining pages
+let nextPage = await transactionCursor.next();
+while (nextPage !== null) {
+  console.log(`Next page: ${nextPage.transactions.length} transactions`);
+  nextPage = await transactionCursor.next();
+}
+```
+
+## Internal implementation
+
+The `HasMoreMirrorNode` class tracks pagination state internally:
+
+```typescript
+export abstract class HasMoreMirrorNode<P, D extends Response> extends BaseMirrorNode<D> {
+  private nextLink?: string | null;
+  private basicParams: Partial<BasicParams> = {};
+  protected abstract params: Partial<P>;
+  
+  protected override fetch = async<T extends Response = D>(url: string) => {
+    const res = await this.mirrorClient.fetch<T>(url, this.completeParams);
+    this.nextLink = res.links?.next;  // Store next link from response
+    return res;
+  }
+}
+```
+
+### How it works
+
+1. When `get()` is called, the fetch method executes and stores `res.links?.next`
+2. The `nextLink` property holds the URL for the next page
+3. Calling `next()` uses this stored URL to fetch the next page
+4. Each response updates `nextLink` with the new next page URL
+
+## Controlling page size
+
+Use the `setLimit()` method to control how many items are returned per page:
+
+```typescript
+setLimit(limit: number) {
+  this.basicParams[filterKeys.LIMIT] = limit;
+  return this;
+}
+```
+
+Example usage:
+
+```typescript
+const cursor = accounts(mirrorClient)
+  .setLimit(50)  // Get 50 accounts per page
+  .order('asc');
+
+const page1 = await cursor.get();     // 50 accounts
+const page2 = await cursor.next();    // next 50 accounts
+```
+
+## Controlling sort order
+
+Use the `order()` method to control the sort order:
+
+```typescript
+order(order: "asc" | "desc") {
+  this.basicParams[filterKeys.ORDER] = order;
+  return this;
+}
+```
+
+Example usage:
+
+```typescript
+// Get newest accounts first
+const newestFirst = await accounts(mirrorClient)
+  .order('desc')
+  .setLimit(10)
+  .get();
+
+// Get oldest accounts first  
+const oldestFirst = await accounts(mirrorClient)
+  .order('asc')
+  .setLimit(10)
+  .get();
+```
+
+## Complete pagination patterns
+
+### Pattern 1: Process all pages
+
+```typescript
+const cursor = accounts(mirrorClient).setLimit(100);
+
+let currentPage = await cursor.get();
+let totalProcessed = 0;
+
+while (currentPage) {
+  // Process current page
+  totalProcessed += currentPage.accounts.length;
+  console.log(`Processed ${totalProcessed} accounts so far`);
+  
+  // Get next page (returns null when done)
+  currentPage = await cursor.next();
+}
+
+console.log(`Total accounts processed: ${totalProcessed}`);
+```
+
+### Pattern 2: Stop after condition
+
+```typescript
+const cursor = transactions(mirrorClient)
+  .setAccountId('0.0.1234')
+  .setLimit(50);
+
+let page = await cursor.get();
+let found = false;
+
+while (page && !found) {
+  for (const txn of page.transactions) {
+    if (txn.transaction_id === 'target-id') {
+      console.log('Found target transaction!');
+      found = true;
+      break;
+    }
+  }
+  
+  if (!found) {
+    page = await cursor.next();
+  }
+}
+```
+
+### Pattern 3: Collect limited pages
+
+```typescript
+const cursor = topicMessages(mirrorClient)
+  .setTopicId('0.0.5678')
+  .setLimit(25);
+
+const maxPages = 5;
+const allMessages = [];
+
+let page = await cursor.get();
+let pageCount = 1;
+
+while (page && pageCount <= maxPages) {
+  allMessages.push(...page.messages);
+  console.log(`Collected page ${pageCount}`);
+  
+  page = await cursor.next();
+  pageCount++;
+}
+
+console.log(`Collected ${allMessages.length} total messages`);
+```
+
+## Timestamp filtering
+
+You can combine pagination with timestamp filtering:
+
+```typescript
+import { optionalFilters } from '@hashgraph/hedera-mirror-node-ts';
+
+const cursor = transactions(mirrorClient)
+  .timestamp(optionalFilters.greaterThan('1234567890.000000000'))
+  .setLimit(100)
+  .order('asc');
+
+let page = await cursor.get();
+while (page) {
+  console.log(`Processing ${page.transactions.length} transactions`);
+  page = await cursor.next();
+}
+```
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Use appropriate page sizes">
+    Balance between number of requests and data transfer. Typical values are 10-100 items per page.
+  </Accordion>
+  
+  <Accordion title="Check for null responses">
+    Always check if `next()` returns `null` before processing the result to avoid errors.
+  </Accordion>
+  
+  <Accordion title="Handle errors gracefully">
+    Network issues can occur during pagination. Implement retry logic for production applications.
+  </Accordion>
+  
+  <Accordion title="Store cursor state if needed">
+    If you need to pause and resume pagination, store the `links.next` URL from the response.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Optional filters" href="/core-concepts/optional-filters" icon="filter">
+    Learn about comparison operators for filtering results
+  </Card>
+  
+  <Card title="Transaction types" href="/core-concepts/transaction-types" icon="list">
+    Explore the available transaction types for filtering
+  </Card>
+</CardGroup>

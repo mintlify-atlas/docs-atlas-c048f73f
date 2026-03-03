@@ -1,0 +1,155 @@
+---
+title: "OptionalFilters"
+description: "Type and helper utilities for applying comparison filters to API queries"
+---
+
+## Overview
+
+The `OptionalFilters` type and `optionalFilters` helper object provide a type-safe way to apply comparison operators to Mirror Node API queries. These filters allow you to specify conditions like greater than, less than, equality, and more.
+
+## Type definition
+
+```typescript
+type OptionalFilters =
+  | `gt:${string}`
+  | `gte:${string}`
+  | `lt:${string}`
+  | `lte:${string}`
+  | `ne:${string}`
+  | `eq:${string}`
+  | string;
+```
+
+The `OptionalFilters` type accepts:
+- Prefixed strings with comparison operators (`gt:`, `gte:`, `lt:`, `lte:`, `ne:`, `eq:`)
+- Plain strings for exact matching
+
+## Helper methods
+
+The `optionalFilters` object provides convenient methods to construct filter strings:
+
+<ParamField path="greaterThan" type="(val: any) => OptionalFilters">
+  Creates a greater-than filter. Returns values strictly greater than the specified value.
+  
+  ```typescript
+  optionalFilters.greaterThan('0.0.1000')
+  // Returns: "gt:0.0.1000"
+  ```
+</ParamField>
+
+<ParamField path="greaterThanEqualTo" type="(val: any) => OptionalFilters">
+  Creates a greater-than-or-equal-to filter. Returns values greater than or equal to the specified value.
+  
+  ```typescript
+  optionalFilters.greaterThanEqualTo(1000000000)
+  // Returns: "gte:1000000000"
+  ```
+</ParamField>
+
+<ParamField path="lessThan" type="(val: any) => OptionalFilters">
+  Creates a less-than filter. Returns values strictly less than the specified value.
+  
+  ```typescript
+  optionalFilters.lessThan('1234567890.000000000')
+  // Returns: "lt:1234567890.000000000"
+  ```
+</ParamField>
+
+<ParamField path="lessThanEqualTo" type="(val: any) => OptionalFilters">
+  Creates a less-than-or-equal-to filter. Returns values less than or equal to the specified value.
+  
+  ```typescript
+  optionalFilters.lessThanEqualTo(500)
+  // Returns: "lte:500"
+  ```
+</ParamField>
+
+<ParamField path="notEqualTo" type="(val: any) => OptionalFilters">
+  Creates a not-equal-to filter. Excludes values equal to the specified value.
+  
+  ```typescript
+  optionalFilters.notEqualTo('0.0.98')
+  // Returns: "ne:0.0.98"
+  ```
+</ParamField>
+
+<ParamField path="equalTo" type="(val: any) => OptionalFilters">
+  Creates an equality filter. Returns only values equal to the specified value.
+  
+  ```typescript
+  optionalFilters.equalTo('SUCCESS')
+  // Returns: "eq:SUCCESS"
+  ```
+</ParamField>
+
+## Usage examples
+
+### Filter transactions by timestamp
+
+```typescript
+import { RestMirrorNode, optionalFilters } from '@hashgraph/hedera-mirror-node';
+
+const mirrorNode = new RestMirrorNode('testnet');
+
+// Get transactions after a specific timestamp
+const recentTxs = await mirrorNode.getTransactions({
+  timestamp: optionalFilters.greaterThan('1234567890.000000000')
+});
+
+// Get transactions in a time range
+const rangeTxs = await mirrorNode.getTransactions({
+  timestamp: [
+    optionalFilters.greaterThanEqualTo('1234567890.000000000'),
+    optionalFilters.lessThan('1234567900.000000000')
+  ]
+});
+```
+
+### Filter accounts by balance
+
+```typescript
+// Get accounts with balance greater than 100 HBAR
+const richAccounts = await mirrorNode.getAccounts({
+  'account.balance': optionalFilters.greaterThan(10000000000) // 100 HBAR in tinybars
+});
+
+// Get accounts with specific balance
+const exactBalance = await mirrorNode.getAccounts({
+  'account.balance': optionalFilters.equalTo(5000000000) // 50 HBAR
+});
+```
+
+### Filter tokens by supply
+
+```typescript
+// Get tokens with total supply less than 1 million
+const limitedSupply = await mirrorNode.getTokens({
+  totalSupply: optionalFilters.lessThan(1000000)
+});
+
+// Get tokens excluding a specific supply amount
+const excludeSupply = await mirrorNode.getTokens({
+  totalSupply: optionalFilters.notEqualTo(0)
+});
+```
+
+### Combine multiple filters
+
+```typescript
+// Get NFT transfers in a specific time range for a token
+const nftTransfers = await mirrorNode.getNFTTransfers({
+  tokenId: '0.0.12345',
+  timestamp: [
+    optionalFilters.greaterThanEqualTo('1700000000.000000000'),
+    optionalFilters.lessThanEqualTo('1700100000.000000000')
+  ]
+});
+```
+
+## Notes
+
+- All helper methods accept any value type and convert it to a string in the filter
+- Multiple filters can be applied to the same parameter by passing an array
+- The plain string value (without prefix) performs exact matching
+- Timestamp values should be in the format `seconds.nanoseconds` (e.g., `1234567890.000000000`)
+- Balance and supply values are typically in the smallest unit (tinybars for HBAR, base units for tokens)

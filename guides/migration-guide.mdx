@@ -1,0 +1,273 @@
+---
+title: Migration guide
+description: Guide for migrating from v2 to v3 of the Hedera Mirror Node TypeScript SDK, including breaking changes and deprecated features
+---
+
+This guide will help you migrate from v2 to v3 of the Hedera Mirror Node TypeScript SDK.
+
+## Version 3.0.0 migration
+
+Version 3.0.0 was released on August 16, 2024, with a focus on reducing bundle size and modernizing the HTTP client.
+
+### Breaking changes
+
+<Warning>
+  The default `Client` export now uses the Fetch API instead of Axios. This change reduces the library's bundle size and removes the default dependency on Axios.
+</Warning>
+
+There are **no breaking changes visible to users** unless you rely on Axios for older browser compatibility. The Fetch API is supported in all modern browsers and Node.js 18+.
+
+#### Default client change
+
+**Before v3.0.0:**
+```typescript
+import { Client } from '@tikz/hedera-mirror-node-ts';
+
+// Client used Axios internally
+const client = new Client('https://testnet.mirrornode.hedera.com');
+```
+
+**After v3.0.0:**
+```typescript
+import { Client } from '@tikz/hedera-mirror-node-ts';
+
+// Client now uses Fetch API internally
+const client = new Client('https://testnet.mirrornode.hedera.com');
+```
+
+For most users, this is a drop-in replacement with no code changes required.
+
+### Deprecated features
+
+<Warning>
+  The `AxiosClient` is now deprecated and will be removed in a future version. If you still need to use Axios, you can import it separately, but migration to the Fetch-based client is strongly recommended.
+</Warning>
+
+#### Using AxiosClient (not recommended)
+
+If you need to continue using the Axios-based client:
+
+<Steps>
+  <Step title="Install Axios">
+    First, ensure Axios is installed in your project:
+
+    ```bash
+    npm install axios
+    ```
+
+    or
+
+    ```bash
+    yarn add axios
+    ```
+  </Step>
+
+  <Step title="Import AxiosClient">
+    Update your imports to use `AxiosClient` explicitly:
+
+    ```typescript
+    import { AxiosClient } from '@tikz/hedera-mirror-node-ts';
+
+    const client = new AxiosClient('https://testnet.mirrornode.hedera.com');
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  We strongly recommend migrating to the Fetch-based client as the Axios-based client will be removed in a future version.
+</Note>
+
+### Migration steps
+
+<Steps>
+  <Step title="Update the package">
+    Update to the latest version:
+
+    ```bash
+    npm install @tikz/hedera-mirror-node-ts@latest
+    ```
+
+    or
+
+    ```bash
+    yarn add @tikz/hedera-mirror-node-ts@latest
+    ```
+  </Step>
+
+  <Step title="Check browser compatibility">
+    Ensure your target browsers support the Fetch API:
+
+    - All modern browsers (Chrome 42+, Firefox 39+, Safari 10.1+, Edge 14+)
+    - Node.js 18+
+    - React Native 0.60+ (with polyfill)
+
+    If you need to support older browsers, you have two options:
+    1. Use the deprecated `AxiosClient` (temporary solution)
+    2. Add a Fetch polyfill like `whatwg-fetch` or `node-fetch`
+  </Step>
+
+  <Step title="Test your application">
+    The new Fetch-based client should work as a drop-in replacement. Test your application to ensure all API calls work correctly:
+
+    ```typescript
+    import { Client, topicMessages } from '@tikz/hedera-mirror-node-ts';
+
+    const client = new Client('https://testnet.mirrornode.hedera.com');
+    
+    const messages = await topicMessages(client)
+      .setTopicId('0.0.16430')
+      .setLimit(10)
+      .get();
+    
+    console.log('Migration successful:', messages);
+    ```
+  </Step>
+
+  <Step title="Remove Axios dependency (optional)">
+    If you're not using Axios elsewhere in your project, you can remove it:
+
+    ```bash
+    npm uninstall axios
+    ```
+
+    or
+
+    ```bash
+    yarn remove axios
+    ```
+  </Step>
+</Steps>
+
+## Version 2.2.0 updates
+
+Version 2.2.0 was released on August 15, 2024, with new features and improvements. **No breaking changes were introduced**, ensuring backward compatibility.
+
+### New features
+
+<AccordionGroup>
+  <Accordion title="Fetch single transaction using transaction ID">
+    You can now fetch a single transaction using `setTransactionId`:
+
+    **New in v2.2.0:**
+    ```typescript
+    import { transactions } from '@tikz/hedera-mirror-node-ts';
+
+    const txn = await transactions(client)
+      .setTransactionId('0.0.123@1234567890.000000000')
+      .get();
+    ```
+
+    <Warning>
+      When `setTransactionId` is set, all other query parameters (limit, order, etc.) are ignored.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Fetch topic messages by sequence number">
+    You can now fetch topic messages based on a single sequence number or use `OptionalFilters`:
+
+    **New in v2.2.0:**
+    ```typescript
+    import { topicMessages, optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
+    // Fetch single message by sequence number
+    const message = await topicMessages(client)
+      .setTopicId('0.0.16430')
+      .setSequenceNumber(42)
+      .get();
+
+    // Use optional filters
+    const messages = await topicMessages(client)
+      .setTopicId('0.0.16430')
+      .setSequenceNumber(optionalFilters.greaterThan(20))
+      .setLimit(10)
+      .get();
+    ```
+  </Accordion>
+
+  <Accordion title="filterParams method for enhanced control">
+    A new `filterParams` method was added to the base class, allowing child classes to ignore `order` and `limit` parameters when fetching single entities using `transaction_id`, `account_id`, etc.
+
+    This internal improvement makes the SDK more robust by allowing parameter reuse without raising errors.
+  </Accordion>
+</AccordionGroup>
+
+### Deprecated features in v2.2.0
+
+<Warning>
+  The `.sequenceNumber()` method on `topicMessages` cursor is now deprecated. Use `setSequenceNumber()` instead.
+</Warning>
+
+**Before v2.2.0:**
+```typescript
+const msgCursor = topicMessages(client)
+  .setTopicId('0.0.16430')
+  .sequenceNumber(optionalFilters.greaterThan(20)); // Deprecated
+```
+
+**After v2.2.0:**
+```typescript
+const msgCursor = topicMessages(client)
+  .setTopicId('0.0.16430')
+  .setSequenceNumber(optionalFilters.greaterThan(20)); // Recommended
+```
+
+### Type definition updates
+
+Type definitions were refined and updated to better align with the latest changes in Hedera APIs. No action is required unless you're using custom type definitions.
+
+## Migrating from deprecated Mirror Node API versions
+
+If the Mirror Node `/api/v1` endpoint gets deprecated, you can use a more raw approach until the library gets updated:
+
+```typescript
+import { 
+  Client, 
+  TopicMessages, 
+  Transactions, 
+  NetworkSupply,
+  TokenUtils, 
+  NFTUtils 
+} from "@tikz/hedera-mirror-node-ts";
+
+const client = new Client('https://testnet.mirrornode.hedera.com');
+
+// Specify custom API version paths
+const msgCursor = new TopicMessages(client, '/api/v2/topics')
+  .setTopicId('0.0.16430')
+  .setLimit(10)
+  .order('asc');
+
+// Similarly for other resources
+const transactionCursor = new Transactions(client, '/api/v2/transactions');
+const networkSupplyCursor = new NetworkSupply(client, '/api/v2/network/supply');
+const tokenUtils = new TokenUtils(client, '/api/v2/token');
+const nftUtils = new NFTUtils(client, '/api/v2/token');
+```
+
+This allows you to specify custom endpoint paths while the library is being updated to support new API versions.
+
+## Getting help
+
+If you encounter any issues during migration:
+
+1. Check the [changelog](https://github.com/tikz/hedera-mirror-node-ts/blob/main/readme.md#changelog) for detailed release notes
+2. Review the [API reference](/api-reference/accounts) for updated method signatures
+3. Open an issue on [GitHub](https://github.com/tikz/hedera-mirror-node-ts/issues) if you find a bug
+
+## Summary
+
+<CardGroup cols={2}>
+  <Card title="v3.0.0" icon="arrow-up">
+    - Default client uses Fetch API
+    - AxiosClient is deprecated
+    - No visible breaking changes
+    - Smaller bundle size
+  </Card>
+  
+  <Card title="v2.2.0" icon="sparkles">
+    - Fetch single transactions by ID
+    - Enhanced sequence number filtering
+    - Improved parameter handling
+    - No breaking changes
+  </Card>
+</CardGroup>

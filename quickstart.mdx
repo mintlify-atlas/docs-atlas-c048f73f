@@ -1,80 +1,327 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick start
+description: Get up and running with the Hedera Mirror Node TypeScript SDK
 ---
 
-## Get started in three steps
+# Quick start
 
-Get your documentation site running locally and make your first customization.
+This guide will help you start querying the Hedera Mirror Node using the TypeScript SDK.
 
-### Step 1: Set up your local environment
+## Initialize the client
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+First, create a client instance pointing to your desired Hedera network:
 
-### Step 2: Deploy your changes
+```typescript
+import { Client } from '@tikz/hedera-mirror-node-ts';
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+const client = new Client('https://testnet.mirrornode.hedera.com');
+```
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+<Tip>
+  Use `https://mainnet.mirrornode.hedera.com` for mainnet or `https://testnet.mirrornode.hedera.com` for testnet.
+</Tip>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+## Query accounts
 
-### Step 3: Go live
+Retrieve account information with optional filters:
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+```typescript
+import { accounts, optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
+const accountCursor = accounts(client)
+  .setAccountId(optionalFilters.lessThan('0.0.15678177'))
+  .setLimit(2);
+
+const accounts1 = await accountCursor.get();
+const accounts2 = await accountCursor.next();
+```
+
+### Available account methods
+
+- `setAccountId(val: OptionalFilters)` - Filter by account ID
+- `setBalance(val: OptionalFilters)` - Filter by account balance
+- `setPublicKey(val: string)` - Filter by public key
+- `setTransactionType(val: TransactionType)` - Filter by transaction type
+- `setLimit(limit: number)` - Set page size
+- `order(order: 'asc' | 'desc')` - Set sort order
+
+## Query transactions
+
+Search transactions with multiple filter options:
+
+```typescript
+import { transactions, TransactionType } from '@tikz/hedera-mirror-node-ts';
+
+const transactionCursor = transactions(client)
+  .setAccountId('0.0.15678177')
+  .setLimit(2)
+  .setType('debit')
+  .setTransactionType(TransactionType.CONSENSUSSUBMITMESSAGE)
+  .setResult('success');
+
+const txns = await transactionCursor.get();
+const txns2 = await transactionCursor.next();
+```
+
+### Fetch a single transaction
+
+You can fetch a specific transaction by its transaction ID:
+
+```typescript
+const singleTxn = await transactions(client)
+  .setTransactionId('0.0.123@1234567890.123456789')
+  .get();
+```
+
+<Note>
+  When a transaction ID is set, all other filter parameters are ignored.
+</Note>
+
+### Available transaction methods
+
+- `setTransactionId(val: string)` - Fetch specific transaction
+- `setAccountId(val: OptionalFilters)` - Filter by account
+- `setResult(val: 'fail' | 'success')` - Filter by result
+- `setType(val: 'credit' | 'debit')` - Filter by credit/debit
+- `setTransactionType(val: TransactionType)` - Filter by transaction type
+- `setLimit(limit: number)` - Set page size
+- `order(order: 'asc' | 'desc')` - Set sort order
+
+## Query topic messages
+
+Access Hedera Consensus Service (HCS) messages:
+
+```typescript
+import { topicMessages, optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
+const msgCursor = topicMessages(client)
+  .setTopicId('0.0.16430')
+  .setLimit(10)
+  .order('asc')
+  .setSequenceNumber(optionalFilters.greaterThan(20));
+
+// Get messages where sequenceNumber > 20
+const msgs = await msgCursor.get();
+
+// Get next batch
+const msgs2 = await msgCursor.next();
+```
+
+### Fetch a specific message
+
+Retrieve a single message by sequence number:
+
+```typescript
+const singleMsg = await topicMessages(client)
+  .setTopicId('0.0.16430')
+  .setSequenceNumber(42)
+  .get();
+```
+
+## Query tokens
+
+The SDK provides comprehensive token querying capabilities:
+
+```typescript
+import { tokenUtils, TokenTypeFilter } from '@tikz/hedera-mirror-node-ts';
+
+const tokenUtil = tokenUtils(client);
+
+// Query NFTs
+const tokenCursor = tokenUtil.Tokens
+  .setLimit(2)
+  .order('desc')
+  .setTokenType(TokenTypeFilter.NON_FUNGIBLE_UNIQUE);
+
+const nfts = await tokenCursor.get();
+
+// Query fungible tokens
+const fungibleTokens = await tokenUtil.Tokens
+  .setTokenType(TokenTypeFilter.FUNGIBLE_COMMON)
+  .get();
+
+// Get token information
+const tokenInfo = await tokenUtil.TokenInfo
+  .setTokenId('0.0.123456')
+  .get();
+
+// Get token balances
+const tokenBalances = await tokenUtil.TokenBalance
+  .setTokenId('0.0.123456')
+  .get();
+```
+
+<Warning>
+  Do not destructure `tokenUtils` - it's a class instance, not an object with independent functions.
+</Warning>
+
+## Query NFTs
+
+Query NFT collections and individual NFTs:
+
+```typescript
+import { nftUtils } from '@tikz/hedera-mirror-node-ts';
+
+const nftUtil = nftUtils(client);
+
+// Get NFTs in a collection
+const nftsCursor = nftUtil.NFTs
+  .setTokenId('0.0.123456')
+  .order('asc');
+
+const nfts = await nftsCursor.get();
+
+// Get specific NFT info
+const nftInfo = await nftUtil.NFTInfo
+  .setTokenId('0.0.123456')
+  .setSerialNumber(1)
+  .get();
+
+// Get NFT transaction history
+const nftTxns = await nftUtil.NFTTransactionHistory
+  .setTokenId('0.0.123456')
+  .setSerialNumber(1)
+  .get();
+```
+
+## Query network supply
+
+Get the current network supply:
+
+```typescript
+import { networkSupply } from '@tikz/hedera-mirror-node-ts';
+
+const supply = await networkSupply(client).get();
+
+console.log(supply.total_supply);
+console.log(supply.released_supply);
+console.log(supply.timestamp);
+```
+
+## Using optional filters
+
+The SDK provides helper functions for filtering queries:
+
+```typescript
+import { optionalFilters } from '@tikz/hedera-mirror-node-ts';
+
+// Greater than
+optionalFilters.greaterThan('0.0.1000')
+// Returns: 'gt:0.0.1000'
+
+// Greater than or equal to
+optionalFilters.greaterThanEqualTo(100)
+// Returns: 'gte:100'
+
+// Less than
+optionalFilters.lessThan('0.0.5000')
+// Returns: 'lt:0.0.5000'
+
+// Less than or equal to
+optionalFilters.lessThanEqualTo(500)
+// Returns: 'lte:500'
+
+// Not equal to
+optionalFilters.notEqualTo('0.0.1234')
+// Returns: 'ne:0.0.1234'
+
+// Equal to (or pass the value directly)
+optionalFilters.equalTo('0.0.1234')
+// Returns: 'eq:0.0.1234'
+```
+
+### Filter examples
+
+```typescript
+// Find accounts with balance greater than 1000 hbars
+const richAccounts = await accounts(client)
+  .setBalance(optionalFilters.greaterThan(100000000000)) // 1000 hbars in tinybars
+  .get();
+
+// Find transactions before a specific timestamp
+const oldTxns = await transactions(client)
+  .timestamp(optionalFilters.lessThan('1234567890.123456789'))
+  .get();
+```
+
+## Pagination
+
+All cursor-based queries support automatic pagination:
+
+```typescript
+const cursor = accounts(client).setLimit(10);
+
+// Get first page
+const page1 = await cursor.get();
+
+// Get second page
+const page2 = await cursor.next();
+
+// Get third page
+const page3 = await cursor.next();
+
+// Check if more data is available
+if (page3.links.next) {
+  const page4 = await cursor.next();
+}
+```
+
+<Tip>
+  The `next()` method automatically uses the cursor from the previous response to fetch the next page.
+</Tip>
+
+## Custom HTTP client
+
+Implement your own HTTP client by implementing the `BaseMirrorClient` interface:
+
+```typescript
+import { BaseMirrorClient, Params } from '@tikz/hedera-mirror-node-ts';
+import axios from 'axios';
+
+class CustomClient implements BaseMirrorClient {
+  public baseURL = 'https://mainnet.mirrornode.hedera.com';
+  
+  public async fetch<D>(url: string, params: Params): Promise<D> {
+    const response = await axios.get(this.baseURL + url, { params });
+    return response.data;
+  }
+}
+
+const client = new CustomClient();
+```
+
+## Transaction types
+
+The SDK exports a `TransactionType` enum with all Hedera transaction types:
+
+```typescript
+import { TransactionType } from '@tikz/hedera-mirror-node-ts';
+
+// Examples:
+TransactionType.CONSENSUSSUBMITMESSAGE
+TransactionType.CRYPTOTRANSFER
+TransactionType.TOKENCREATION
+TransactionType.TOKENASSOCIATE
+TransactionType.CONTRACTCALL
+TransactionType.CRYPTOCREATEACCOUNT
+// ... and many more
+```
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
+Explore the full API reference to learn about all available methods and response types:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Accounts API" icon="user" href="/api-reference/accounts">
+    Complete account querying reference
+  </Card>
+  <Card title="Transactions API" icon="arrow-right-arrow-left" href="/api-reference/transactions">
+    Transaction filtering and search
+  </Card>
+  <Card title="Tokens API" icon="coins" href="/api-reference/tokens">
+    Token and NFT queries
+  </Card>
+  <Card title="Topics API" icon="message" href="/api-reference/topic-messages">
+    HCS message retrieval
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
